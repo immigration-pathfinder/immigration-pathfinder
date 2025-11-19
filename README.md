@@ -178,9 +178,37 @@ Gaps: Limited German proficiency, moderate work experience
 ---
 
 ## 🛠 Tools & Utilities
-- **Google Search Tool (ADK/MCP)** – retrieve non-legal high-level info  
-- **Funds Gap Calculator**  
-- **Currency utilities**  
+
+### 🔍 Search Tool
+
+Retrieves high-level, non-legal immigration information using ADK/MCP.
+
+Used for:
+ 
+- **Visa difficulty descriptions**
+
+- **Job market trends**
+
+- **Country-level summaries**
+
+### 💰 Funds Gap Calculator
+
+Determines whether the user meets minimum financial thresholds for each country/pathway.
+
+Outputs:
+
+- **Required amount**
+
+- **User’s available funds**
+
+- **Gap (if any)**
+
+- **Recommendation (OK / Shortfall Amount)**
+
+ ### 💱 Currency Converter (Optional)
+
+Normalizes any given currency → USD
+Helps maintain consistent rule comparison.
 
 ---
 
