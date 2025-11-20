@@ -1,0 +1,218 @@
+[
+  {
+    "country": "Canada",
+    "pathway": "Study",
+    "min_ielts": 6.5,
+    "min_funds_usd": 22500,
+    "min_degree": "High school diploma for bachelor; bachelor degree for master",
+    "age_max": 50,
+    "notes": "Study permits do not have a fixed maximum age in law, but applicants over 30 must show strong study plan and ties; schools commonly require IELTS Academic 6.5 overall for direct admission to most degree programs. From 2025, IRCC requires proof of living funds around CAD 20,635–22,895 per year (excluding tuition) for a single applicant, which is roughly USD 15,500–17,000, so planning at least USD 22,500 including buffer is realistic. Iranian applicants face longer security/background checks and possible extra documentation, but there is no specific nationality ban; however, embassy processing in Tehran is handled via other posts, which can increase delays."
+  },
+  {
+    "country": "Canada",
+    "pathway": "Work",
+    "min_ielts": 6.0,
+    "min_funds_usd": 3500,
+    "min_degree": "Post‑secondary diploma or degree for most skilled positions",
+    "age_max": 60,
+    "notes": "For employer‑specific work permits under the Temporary Foreign Worker Program or International Mobility Program, there is no official maximum age, but those under 55 fit more easily in most labour market plans. Many regulated professions and employers expect at least CLB 6, which corresponds roughly to IELTS General Training 6.0–6.5. Temporary foreign workers must usually show they can support initial settlement (often a few thousand CAD) until first paycheque; exact amount is not codified but planning USD 3,000–4,000 is realistic. Iranian nationals may face additional security screening, and some occupations in sensitive sectors (energy, defence, dual‑use technologies) may be harder to obtain work permits in due to sanctions and export‑control concerns."
+  },
+  {
+    "country": "Canada",
+    "pathway": "PR",
+    "min_ielts": 6.0,
+    "min_funds_usd": 12000,
+    "min_degree": "Post‑secondary diploma; bachelor preferred for Express Entry",
+    "age_max": 45,
+    "notes": "Express Entry Federal Skilled Worker and Federal Skilled Trades applicants must meet minimum language of CLB 7 and CLB 5 respectively, which roughly corresponds to IELTS General 6.0–7.0 depending on band. For 2025, a single Express Entry applicant must show settlement funds of about CAD 15,263 (≈USD 11,500–12,000) unless exempt due to valid job offer or Canadian work experience. Express Entry CRS points decline sharply after age 29 and drop to near zero after 45, so applicants over 45 have severely reduced competitiveness even though there is technically no maximum age. Iranian applicants are eligible for Express Entry and provincial nominee programs, but may face longer background checks and must ensure funds are not subject to sanctions or transfer restrictions when documented."
+  },
+  {
+    "country": "USA",
+    "pathway": "Study",
+    "min_ielts": 6.5,
+    "min_funds_usd": 35000,
+    "min_degree": "High school diploma for bachelor; bachelor degree for graduate programs",
+    "age_max": 50,
+    "notes": "U.S. schools typically require IELTS 6.5 or higher for admission to degree programs, although the F‑1 visa itself does not mandate a specific test. For an F‑1 visa, students must prove funds covering at least one year of tuition plus living costs, which for many programs realistically totals USD 30,000–50,000 depending on institution and location. There is no formal maximum age, but older applicants must show a credible study and career progression to satisfy nonimmigrant intent. Under the 2025 travel restrictions, many new nonimmigrant visas for Iranians, including student visas, are heavily restricted or suspended, though waivers may exist case‑by‑case and policies are under ongoing legal and political challenge."
+  },
+  {
+    "country": "USA",
+    "pathway": "Work",
+    "min_ielts": 0,
+    "min_funds_usd": 5000,
+    "min_degree": "At least bachelor degree (or equivalent experience) for H‑1B and most specialty occupations",
+    "age_max": 55,
+    "notes": "The U.S. does not require IELTS for work visas, but employers often expect strong English and sometimes standardized scores for internal screening. Specialty occupation visas (such as H‑1B) generally require at least a bachelor degree or equivalent experience in a related field; L‑1 and O‑1 have different experience criteria. Applicants must typically show they can support themselves until first paycheck, so a few thousand USD in accessible funds is prudent though not codified. Current U.S. travel restrictions for Iranians significantly limit issuance of many work and temporary visas, but employment‑based immigrant visas (EB‑1/EB‑2/EB‑3) and some family‑based categories may still proceed under exemptions or waivers; processing is often slower and usually handled via consulates outside Iran."
+  },
+  {
+    "country": "USA",
+    "pathway": "PR",
+    "min_ielts": 0,
+    "min_funds_usd": 10000,
+    "min_degree": "Varies by category; high‑skilled employment‑based usually bachelor or higher",
+    "age_max": 60,
+    "notes": "Permanent residence in the U.S. is usually obtained through family sponsorship, employment‑based categories, refugee/asylee adjustment, or programs like the Diversity Visa (DV) Lottery. There is no formal English test requirement or maximum age for most green card categories, but English and age affect employability and ease of integration. Employment‑based categories often require at least a bachelor degree or exceptional ability, while some family and humanitarian categories do not specify education. Iranian nationals remain eligible in principle for certain immigrant categories and historically have been able to participate in the DV Lottery when Iran is listed as eligible, though security screening is strict and temporary travel bans can affect visa issuance logistics."
+  },
+  {
+    "country": "Germany",
+    "pathway": "Study",
+    "min_ielts": 6.0,
+    "min_funds_usd": 13500,
+    "min_degree": "High school diploma for bachelor; relevant bachelor degree for master",
+    "age_max": 40,
+    "notes": "German universities commonly ask for IELTS 6.0–6.5 for English‑taught programs, while German‑taught programs require language certificates like TestDaF or DSH. For 2025, the required blocked account amount is EUR 11,904 for one year (≈USD 12,500–13,000), used as proof of living expenses in addition to tuition. There is no legal maximum age, but applicants over about 30 may face more questions about academic progression when applying for a student residence permit. Iranian students are generally eligible but may face extra background checks; academic cooperation in sensitive scientific or dual‑use fields can be scrutinized due to EU export‑control and sanctions regimes."
+  },
+  {
+    "country": "Germany",
+    "pathway": "Work",
+    "min_ielts": 0,
+    "min_funds_usd": 3000,
+    "min_degree": "Recognized vocational qualification or bachelor degree; EU Blue Card typically requires a university degree",
+    "age_max": 55,
+    "notes": "Germany’s main skilled work pathways (including the EU Blue Card) typically require a recognized university degree and a job offer meeting salary thresholds, while other skilled worker routes accept vocational qualifications. There is no formal IELTS requirement since German or English skills depend on employer and job; many tech roles accept English‑only, while regulated professions require German. Applicants should have savings to cover initial months before first salary; around EUR 2,500–3,500 (≈USD 2,700–3,800) is a realistic minimum for a single person. Iranian nationals can obtain German work visas but may face stricter checks in industries linked to dual‑use technologies, energy, or advanced research because of EU and UN sanctions."
+  },
+  {
+    "country": "Germany",
+    "pathway": "PR",
+    "min_ielts": 0,
+    "min_funds_usd": 0,
+    "min_degree": "No formal degree requirement, but permanent residence usually follows skilled work or long legal stay based on prior qualifications",
+    "age_max": 67,
+    "notes": "German permanent residence (Niederlassungserlaubnis) is usually available after several years of legal residence with stable income and social security contributions, often 4 years for EU Blue Card holders and 5 years for others. There is no specific IELTS or funds threshold at PR stage, but applicants must show secure livelihood without relying on social assistance and adequate pension contributions. Older applicants can qualify provided they can demonstrate long‑term financial stability; formal maximum age aligns with general retirement age for some pension‑related considerations. Iranian citizens with long‑term residence in Germany can apply for PR under the same rules as other third‑country nationals, though background checks and any security flags can lengthen processing times."
+  },
+  {
+    "country": "Netherlands",
+    "pathway": "Study",
+    "min_ielts": 6.5,
+    "min_funds_usd": 13000,
+    "min_degree": "High school diploma for bachelor; relevant bachelor degree for master",
+    "age_max": 40,
+    "notes": "Dutch universities commonly require IELTS 6.0–6.5 for English‑taught bachelor and master programs. IND requires students to show sufficient funds for living costs, around EUR 1,094 per month in 2024/25 (≈EUR 11,000–12,000 per academic year), separate from tuition. There is no formal maximum age in law, but older applicants must show a coherent study and career plan to qualify for a residence permit. Iranian students need an MVV long‑stay visa and residence permit; they may face export‑control review in certain technical fields, and processing often occurs through embassies in neighbouring countries rather than Tehran."
+  },
+  {
+    "country": "Netherlands",
+    "pathway": "Work",
+    "min_ielts": 0,
+    "min_funds_usd": 3000,
+    "min_degree": "Usually bachelor degree or equivalent for highly skilled migrant; lower for some shortage or seasonal roles",
+    "age_max": 55,
+    "notes": "The highly skilled migrant (kennismigrant) and EU Blue Card schemes typically require a university degree and a job offer meeting salary thresholds, while other work permits can use vocational qualifications. No IELTS score is mandated by immigration authorities; employers in international environments often expect strong English, and some roles require Dutch. Workers are normally expected to support themselves from their salary, but having several thousand EUR to cover initial expenses before first pay is prudent. Iranian nationals can receive Dutch work visas but may face enhanced screening in sectors sensitive under EU sanctions, especially energy, advanced tech, or dual‑use research."
+  },
+  {
+    "country": "Netherlands",
+    "pathway": "PR",
+    "min_ielts": 0,
+    "min_funds_usd": 0,
+    "min_degree": "No formal degree requirement; long‑term residence usually follows prior skilled study or work",
+    "age_max": 67,
+    "notes": "Permanent residence or long‑term EU residence in the Netherlands typically requires 5 years of continuous legal stay, stable income, and integration (including a civic integration exam which tests Dutch, not IELTS). There is no explicit minimum funds requirement beyond proof of sustainable income and no strict maximum age. Iranian nationals with long‑term lawful residence are eligible on the same legal basis as other third‑country nationals, though background and security checks can be more detailed."
+  },
+  {
+    "country": "Ireland",
+    "pathway": "Study",
+    "min_ielts": 6.5,
+    "min_funds_usd": 11500,
+    "min_degree": "High school diploma for bachelor; bachelor degree for master",
+    "age_max": 40,
+    "notes": "Irish higher‑education institutions usually require IELTS 6.0–6.5 for direct entry to degree programs. From mid‑2025, non‑EU students on long courses must show at least EUR 10,000–12,000 in living funds for the first year in addition to tuition, which is about USD 10,800–13,000. There is no formal age limit, but applicants over about 35 should clearly demonstrate how the course fits their career path to satisfy immigration officers. Iranian students can obtain Irish study visas but may face longer processing and enhanced checks; sanctions‑related banking issues can complicate showing acceptable proof of funds from Iranian banks."
+  },
+  {
+    "country": "Ireland",
+    "pathway": "Work",
+    "min_ielts": 0,
+    "min_funds_usd": 3000,
+    "min_degree": "Relevant degree or skills for Critical Skills or General Employment permits",
+    "age_max": 60,
+    "notes": "Ireland’s Critical Skills Employment Permit generally requires a relevant degree and a job offer in a qualifying occupation above salary thresholds, while General Employment Permits can accept skills plus experience. There is no mandated IELTS score, though employers generally expect strong English. Work permit holders are expected to be self‑sufficient through salary, but having several thousand EUR for initial expenses is realistic. Iranian nationals can apply for Irish work permits and visas, but financial sanctions and extra security checks can make documentation and banking arrangements more complex."
+  },
+  {
+    "country": "Ireland",
+    "pathway": "PR",
+    "min_ielts": 0,
+    "min_funds_usd": 0,
+    "min_degree": "No formal degree requirement; typically follows skilled work or long‑term lawful residence",
+    "age_max": 65,
+    "notes": "After 5 years of legal residence (or 2 years for some Critical Skills holders), many non‑EEA nationals can apply for long‑term residence or Stamp 4, leading eventually to eligibility for citizenship. There is no IELTS requirement for residence; English may be assessed informally for integration and employment but is not codified as a test score. No specific savings threshold exists at PR stage, but stable income and clean immigration history are important. Iranians with long‑term lawful residence can qualify on the same statutory basis as other non‑EU nationals, though background checks may be more detailed due to geopolitical and sanctions considerations."
+  },
+  {
+    "country": "Sweden",
+    "pathway": "Study",
+    "min_ielts": 6.5,
+    "min_funds_usd": 10400,
+    "min_degree": "High school diploma for bachelor; bachelor degree for master",
+    "age_max": 40,
+    "notes": "Swedish universities commonly require IELTS 6.5 for English‑taught programs. For 2025, the Swedish Migration Agency requires at least about SEK 10,314–10,584 per month for 10 months (≈SEK 103,140–105,840 per year) as proof of living funds, which is roughly USD 10,000–10,500. There is no strict maximum age, but older applicants must show a coherent study and career rationale to obtain a residence permit for studies. Iranian students may face longer processing and greater scrutiny of research topics, especially those related to advanced technologies and dual‑use fields, due to EU sanctions and export‑control rules."
+  },
+  {
+    "country": "Sweden",
+    "pathway": "Work",
+    "min_ielts": 0,
+    "min_funds_usd": 2500,
+    "min_degree": "Vocational qualification or bachelor degree depending on occupation",
+    "age_max": 60,
+    "notes": "Sweden grants work permits mainly to applicants with a job offer that meets salary and conditions requirements; for many skilled roles a relevant degree or vocational qualification is expected. No IELTS score is mandated; employers set language expectations, and many tech jobs operate in English while others require Swedish. Workers must have sufficient income from their employment, but small savings to cover initial months are advisable. Iranian workers can obtain Swedish work permits but may be screened more carefully in sectors linked to sensitive technologies or sanctions."
+  },
+  {
+    "country": "Sweden",
+    "pathway": "PR",
+    "min_ielts": 0,
+    "min_funds_usd": 0,
+    "min_degree": "No formal degree requirement; usually granted after several years of work or other residence",
+    "age_max": 67,
+    "notes": "Permanent residence in Sweden typically requires at least 4 years of work‑based residence or longer for other categories, with ongoing employment and the ability to support oneself. There is no formal language‑test or funds threshold for PR, but future reforms may tighten integration requirements. Iranian nationals can gain Swedish permanent residence under the same legal framework as other third‑country nationals, but background checks may be stricter for those with sensitive professional or academic profiles."
+  },
+  {
+    "country": "Australia",
+    "pathway": "Study",
+    "min_ielts": 6.5,
+    "min_funds_usd": 21000,
+    "min_degree": "High school diploma for bachelor; bachelor degree for master",
+    "age_max": 45,
+    "notes": "Most Australian universities require IELTS 6.0–6.5 for direct entry, and the Student visa (subclass 500) requires evidence of English at a level consistent with the enrolled course. From 2024–2025, Australia’s financial capacity requirement for students is around AUD 24,505–29,710 in living costs per year plus tuition and travel, which converts to roughly USD 18,000–21,000 for living expenses alone. There is no explicit maximum age, but applicants over 40 face closer scrutiny of Genuine Student (formerly GTE) intentions. Iranian students can obtain Australian study visas but may have longer processing times, additional security checks, and limitations in sanctioned fields, while transferring funds from Iran may require third‑country accounts or sponsors."
+  },
+  {
+    "country": "Australia",
+    "pathway": "Work",
+    "min_ielts": 6.0,
+    "min_funds_usd": 3000,
+    "min_degree": "Relevant trade qualification or bachelor degree for skilled visas",
+    "age_max": 45,
+    "notes": "Most skilled migration and employer‑sponsored visas require evidence of English at at least Competent level, typically equivalent to IELTS 6.0 in each band. Many temporary work and skilled visas set a hard age cap of 45 at the time of invitation, though exemptions exist for some employer‑sponsored or regional schemes. Applicants are expected to be self‑supporting from salary but should hold a few thousand AUD (≈USD 2,000–3,000) for initial settlement costs. Iranian nationals can qualify for employer‑sponsored or skilled visas but may need to provide extra documentation and be mindful of restrictions in defence‑related or sensitive technology sectors due to Australian sanctions policy."
+  },
+  {
+    "country": "Australia",
+    "pathway": "PR",
+    "min_ielts": 7.0,
+    "min_funds_usd": 0,
+    "min_degree": "Usually bachelor degree or trade qualification assessed as equivalent to Australian standards",
+    "age_max": 45,
+    "notes": "Points‑tested skilled permanent visas generally require Competent English as a minimum, but higher IELTS scores (e.g., 7.0 or more) are often needed to be competitive for invitations. There is no formal savings requirement for PR if applicants can show they will be employable and self‑supporting, but demonstrating realistic settlement planning is important. Most skilled PR subclasses have a maximum age of 45 at time of invitation, though partner or employer pathways may allow older applicants. Iranian citizens are eligible for Australian PR under skilled and family programs, yet security and character checks can be more intensive, and sanctions may restrict recognition of some military or government‑linked experience."
+  },
+  {
+    "country": "New Zealand",
+    "pathway": "Study",
+    "min_ielts": 6.5,
+    "min_funds_usd": 13000,
+    "min_degree": "High school diploma for bachelor; bachelor degree for master",
+    "age_max": 45,
+    "notes": "New Zealand universities usually require IELTS 6.0–6.5 for direct entry to degree programs. For tertiary‑level studies, student visa applicants must show at least NZD 20,000 per year for living expenses (≈USD 12,000–13,000) in addition to tuition and return travel. There is no strict maximum age, but applicants over 40 should clearly justify their study plans and post‑study intentions. Iranian students can obtain New Zealand study visas but may have to route applications through embassies in third countries and face additional background and financial‑source checks, particularly because of banking sanctions."
+  },
+  {
+    "country": "New Zealand",
+    "pathway": "Work",
+    "min_ielts": 6.0,
+    "min_funds_usd": 2500,
+    "min_degree": "Relevant trade qualification or bachelor degree for skilled roles",
+    "age_max": 55,
+    "notes": "Skilled work visas in New Zealand (e.g., Accredited Employer Work Visa) generally require a job offer, market‑rate salary, and qualifications assessed as equivalent to New Zealand standards. There is no formal IELTS requirement in immigration law, but many skilled roles expect English at around IELTS 6.0 or higher for safe and effective performance. Workers should have some savings (a few thousand NZD) for initial settlement before first wages, though there is no codified amount. Iranian workers are eligible but may face stricter security and source‑of‑funds checks; using overseas accounts or sponsors can be necessary due to banking restrictions affecting Iran."
+  },
+  {
+    "country": "New Zealand",
+    "pathway": "PR",
+    "min_ielts": 6.5,
+    "min_funds_usd": 0,
+    "min_degree": "Usually relevant trade or bachelor degree for skilled residence categories",
+    "age_max": 55,
+    "notes": "Skilled Residence pathways in New Zealand (such as the Skilled Migrant Category or new points‑based residence) typically require English at or above IELTS 6.5 or equivalent for principal applicants. Most skilled residence categories have an upper age limit of 55. There is no specific settlement funds requirement at PR stage if employment and income thresholds are met, but applicants must show they can support themselves and any dependants. Iranian nationals who have held valid work or study visas and meet the points and English criteria can obtain New Zealand residence, but security and background checks may be more detailed due to geopolitical considerations and sanctions."
+  }
+]
