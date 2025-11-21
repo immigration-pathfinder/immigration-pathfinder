@@ -1,0 +1,33 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "MigrationRule",
+    "type": "object",
+    "properties": {
+      "country": { "type": "string" },
+      "minimum_age": { "type": "integer" },
+      "accepted_degrees": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": ["bachelor", "master", "phd"]
+        }
+      },
+      "language_requirements": {
+        "type": "object",
+        "properties": {
+          "english": {
+            "type": "string",
+            "enum": ["a2", "b1", "b2", "c1", "none"]
+          },
+          "other_languages": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "minimum_income_usd": { "type": "number" },
+      "work_experience_min_years": { "type": "number" }
+    },
+    "required": ["country"]
+  }
+  
