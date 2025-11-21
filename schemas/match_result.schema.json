@@ -1,0 +1,30 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "MatchResult",
+    "type": "object",
+    "properties": {
+      "country": { "type": "string" },
+      "pathway": { "type": "string" },
+      "status": {
+        "type": "string",
+        "enum": ["OK", "BORDERLINE", "REJECTED"]
+      },
+      "score": { "type": "number", "minimum": 0, "maximum": 1 },
+      "rule_gaps": {
+        "type": "object",
+        "properties": {
+          "missing_requirements": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "risks": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      },
+      "explanation": { "type": "string" }
+    },
+    "required": ["country", "status", "score"]
+  }
+  
