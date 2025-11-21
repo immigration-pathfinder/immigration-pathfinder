@@ -1,41 +1,40 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "CountryRanking",
-    "type": "object",
-    "properties": {
-      "best_options": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "country": { "type": "string" },
-            "score": { "type": "number" },
-            "reason": { "type": "string" }
-          },
-          "required": ["country", "score"]
-        }
-      },
-      "consider_if_flexible": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "country": { "type": "string" },
-            "score": { "type": "number" },
-            "reason": { "type": "string" }
-          },
-          "required": ["country", "score"]
-        }
-      },
-      "not_recommended": {
-        "type": "array",
-        "items": { "type": "string" }
-      },
-      "scores_by_country": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CountryRanking",
+  "type": "object",
+  "properties": {
+    "best_options": {
+      "type": "array",
+      "items": {
         "type": "object",
-        "additionalProperties": { "type": "number" }
+        "properties": {
+          "country": { "type": "string" },
+          "score": { "type": "number" },
+          "reason": { "type": "string" }
+        },
+        "required": ["country", "score"]
       }
     },
-    "required": ["best_options", "scores_by_country"]
-  }
-  
+    "acceptable": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "country": { "type": "string" },
+          "score": { "type": "number" },
+          "reason": { "type": "string" }
+        },
+        "required": ["country", "score"]
+      }
+    },
+    "not_recommended": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "scores": {
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    }
+  },
+  "required": ["best_options", "scores"]
+}

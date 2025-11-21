@@ -1,51 +1,44 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "UserProfile",
-    "type": "object",
-    "properties": {
-      "personal_info": {
-        "type": "object",
-        "properties": {
-          "age": { "type": "integer", "minimum": 0 },
-          "gender": { "type": "string", "enum": ["female", "male", "other"] },
-          "marital_status": {
-            "type": "string",
-            "enum": ["single", "married", "divorced", "widowed"]
-          },
-          "children": { "type": "integer", "minimum": 0 }
-        },
-        "required": ["age", "gender", "marital_status"]
-      },
-      "education": {
-        "type": "object",
-        "properties": {
-          "highest_degree": {
-            "type": "string",
-            "enum": ["high_school", "diploma", "bachelor", "master", "phd"]
-          },
-          "field": { "type": "string" }
-        },
-        "required": ["highest_degree"]
-      },
-      "language_skills": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "language": { "type": "string" },
-            "level": {
-              "type": "string",
-              "enum": ["a1", "a2", "b1", "b2", "c1", "c2"]
-            },
-            "certificate": { "type": "string" },
-            "score": { "type": "number" }
-          },
-          "required": ["language", "level"]
-        }
-      },
-      "work_experience": {
-        "type": "object",
-        "properties": {
-          "years": { "type": "number" },
-          "job_title": { "type": "string" }_
-  
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UserProfile",
+  "type": "object",
+  "properties": {
+    "age": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "citizenship": { "type": "string" },
+    "marital_status": {
+      "type": "string",
+      "enum": ["single", "married", "divorced", "widowed"]
+    },
+    "education_level": {
+      "type": "string",
+      "enum": ["high_school", "diploma", "bachelor", "master", "phd"]
+    },
+    "field": { "type": "string" },
+    "ielts": { "type": "number", "minimum": 0, "maximum": 9 },
+    "german_level": {
+      "type": "string",
+      "enum": ["none", "a1", "a2", "b1", "b2", "c1", "c2"]
+    },
+    "french_level": {
+      "type": "string",
+      "enum": ["none", "a1", "a2", "b1", "b2", "c1", "c2"]
+    },
+    "funds_usd": { "type": "number", "minimum": 0 },
+    "work_experience_years": { "type": "number", "minimum": 0 },
+    "goal": {
+      "type": "string",
+      "enum": ["Study", "Work", "PR"]
+    },
+    "preferred_region": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "required": [
+    "age",
+    "citizenship",
+    "marital_status",
+    "education_level",
+    "goal"
+  ]
+}
