@@ -65,7 +65,7 @@ def run_manual_test():
             assert "risks" in gaps, "'risks' should exist when risk_status = Risk"
             assert isinstance(gaps["risks"], list), "'risks' must be a list"
 
-    print("\n✅ Manual Test Passed Successfully!\n")
+    print("\n Manual Test Passed Successfully!\n")
 
 
 if __name__ == "__main__":
