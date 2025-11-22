@@ -1,196 +1,223 @@
-# agents/match_agent.py
-from typing import List, Dict, Any, Tuple
-
-DEGREE_ORDER = {
-    "high school": 0,
-    "high_school": 0,
-    "diploma": 1,
-    "bachelor": 2,
-    "master": 3,
-    "phd": 4,
-}
+# tests/test_match_agent_manual.py
+import json
+from pathlib import Path
+from agents.match_agent import MatchAgent
 
 
-class MatchAgent:
-    """Compare UserProfile against country/pathway rules."""
+# Find project root
+PROJECT_ROOT = Path(__file__).parent.parent
+RULES_PATH = PROJECT_ROOT / "rules" / "country_rules.json"
+
+
+def load_rules():
+    """Load country rules from JSON file."""
+    try:
+        with open(RULES_PATH, "r", encoding="utf-8") as f:
+            rules_list = json.load(f)
+        print(f"[INFO] Loaded {len(rules_list)} rules from {RULES_PATH}")
+        return rules_list
+    except FileNotFoundError:
+        print(f"[ERROR] File not found: {RULES_PATH}")
+        print("        Make sure you run this from project root or create the file.")
+        exit(1)
+    except json.JSONDecodeError as e:
+        print(f"[ERROR] Invalid JSON in {RULES_PATH}")
+        print(f"        {e}")
+        exit(1)
+
+
+def print_results_summary(results):
+    """Print a nice summary of results."""
+    print("\n" + "="*60)
+    print(f"RESULTS SUMMARY: {len(results)} matches found")
+    print("="*60)
     
-    # Scoring thresholds
-    SCORE_OK = 0.75
-    SCORE_BORDERLINE = 0.4
-    MAX_PENALTIES = 5
-    LARGE_FUNDS_GAP = 5000
-
-    def __init__(self, rules: List[Dict[str, Any]]) -> None:
-        """
-        Args:
-            rules: List of rule dicts from country_rules.json
-        """
-        if not rules:
-            raise ValueError("Rules list cannot be empty")
-        self.rules = rules
-
-    def _normalize_degree(self, degree: str) -> str:
-        """Normalize degree name for comparison."""
-        if not degree:
-            return ""
-        return degree.lower().strip().replace(" ", "_")
-
-    def _score_single_rule(
-        self,
-        profile: Dict[str, Any],
-        rule: Dict[str, Any],
-    ) -> Tuple[str, float, Dict[str, Any]]:
-        """
-        Compare profile against one rule.
-
-        Returns:
-            (status, score, gaps)
-        """
-        missing: List[str] = []
-        risks: List[str] = []
-        penalties = 0
-
-        # Age check
-        age = profile.get("age")
-        min_age = rule.get("minimum_age")
-        max_age = rule.get("maximum_age") or rule.get("age_max")
-
-        if age is not None:
-            if min_age and age < min_age:
-                missing.append(f"Age {age} below minimum {min_age}")
-                penalties += 1
-            if max_age and age > max_age:
-                missing.append(f"Age {age} above maximum {max_age}")
-                penalties += 1
-
-        # Degree check
-        profile_degree = self._normalize_degree(profile.get("education_level", ""))
-        required_degree = self._normalize_degree(
-            rule.get("min_degree") or rule.get("minimum_degree", "")
-        )
+    # Group by status
+    by_status = {"OK": [], "Borderline": [], "High Risk": []}
+    for r in results:
+        by_status[r["status"]].append(r)
+    
+    for status in ["OK", "Borderline", "High Risk"]:
+        count = len(by_status[status])
+        print(f"\n[{status}]: {count} countries")
         
-        if profile_degree and required_degree:
-            profile_rank = DEGREE_ORDER.get(profile_degree, -1)
-            required_rank = DEGREE_ORDER.get(required_degree, -1)
+        for result in by_status[status][:3]:  # Show max 3 per status
+            print(f"   - {result['country']} ({result['pathway']}): "
+                  f"Score {result['raw_score']:.2f}")
             
-            if profile_rank < 0:
-                missing.append(f"Unknown degree level: {profile_degree}")
-                penalties += 1
-            elif profile_rank < required_rank:
-                missing.append(
-                    f"Degree '{profile_degree}' below required '{required_degree}'"
-                )
-                penalties += 1
+            gaps = result['rule_gaps']['missing_requirements']
+            if gaps:
+                print(f"     Gaps: {gaps[0]}")  # Show first gap
+                if len(gaps) > 1:
+                    print(f"           + {len(gaps)-1} more...")
 
-        # IELTS check
-        profile_ielts = profile.get("ielts")
-        required_ielts = rule.get("min_ielts") or rule.get("minimum_ielts")
 
-        if required_ielts is not None:
-            if profile_ielts is None:
-                missing.append("IELTS score not provided")
-                penalties += 1
-            elif profile_ielts < required_ielts:
-                missing.append(
-                    f"IELTS {profile_ielts} below required {required_ielts}"
-                )
-                penalties += 1
+def test_valid_profile():
+    """Test with a complete, valid profile."""
+    print("\n" + "="*60)
+    print("TEST 1: Valid Student Profile")
+    print("="*60)
+    
+    profile = {
+        "age": 27,
+        "citizenship": "Iran",
+        "marital_status": "single",
+        "education_level": "bachelor",
+        "field": "electrical_engineering",
+        "ielts": 6.5,
+        "german_level": "none",
+        "french_level": "none",
+        "funds_usd": 18000,
+        "work_experience_years": 3,
+        "goal": "Study",
+        "preferred_region": ["Europe", "North America"],
+    }
+    
+    rules_list = load_rules()
+    agent = MatchAgent(rules_list)
+    results = agent.evaluate_all(profile)
+    
+    # Assertions
+    assert isinstance(results, list), "Results must be a list"
+    assert len(results) > 0, "No results returned"
+    
+    for item in results:
+        assert "country" in item, "Missing 'country' key"
+        assert "pathway" in item, "Missing 'pathway' key"
+        assert "status" in item, "Missing 'status' key"
+        assert "raw_score" in item, "Missing 'raw_score' key"
+        assert "rule_gaps" in item, "Missing 'rule_gaps' key"
+        
+        gaps = item["rule_gaps"]
+        assert "missing_requirements" in gaps, "Missing 'missing_requirements'"
+        assert "risk_status" in gaps, "Missing 'risk_status'"
+        
+        # If risk exists, risks list must be present
+        if gaps["risk_status"] == "Risk":
+            assert "risks" in gaps, "'risks' should exist when risk_status = Risk"
+            assert isinstance(gaps["risks"], list), "'risks' must be a list"
+    
+    print_results_summary(results)
+    print("[PASS] Test 1 Passed")
+    return results
 
-        # Funds check
-        funds = profile.get("funds_usd")
-        required_funds = (
-            rule.get("min_funds_usd")
-            or rule.get("minimum_funds_usd")
-            or rule.get("minimum_income_usd")
-        )
 
-        if required_funds is not None:
-            if funds is None:
-                missing.append("Funds information not provided")
-                penalties += 1
-            elif funds < required_funds:
-                gap = required_funds - funds
-                missing.append(f"Insufficient funds (need ${required_funds}, have ${funds})")
-                penalties += 1
-                
-                if gap > self.LARGE_FUNDS_GAP:
-                    risks.append(f"Large funds gap (${gap}) may increase visa refusal risk")
+def test_low_funds_profile():
+    """Test with insufficient funds."""
+    print("\n" + "="*60)
+    print("TEST 2: Low Funds Profile")
+    print("="*60)
+    
+    profile = {
+        "age": 25,
+        "citizenship": "Iran",
+        "education_level": "bachelor",
+        "ielts": 6.0,
+        "funds_usd": 5000,  # Low funds
+        "work_experience_years": 1,
+        "goal": "Study",
+    }
+    
+    rules_list = load_rules()
+    agent = MatchAgent(rules_list)
+    results = agent.evaluate_all(profile)
+    
+    # Should have some "High Risk" or "Borderline" results
+    high_risk_count = sum(1 for r in results if r["status"] == "High Risk")
+    print(f"\n[INFO] High Risk matches: {high_risk_count}")
+    
+    assert len(results) > 0, "Should return results even with low funds"
+    print_results_summary(results)
+    print("[PASS] Test 2 Passed")
+    return results
 
-        # Work experience check
-        years = profile.get("work_experience_years")
-        required_years = (
-            rule.get("work_experience_min_years")
-            or rule.get("minimum_work_experience_years")
-        )
 
-        if required_years is not None:
-            if years is None:
-                missing.append("Work experience not provided")
-                penalties += 1
-            elif years < required_years:
-                missing.append(
-                    f"Insufficient work experience ({years} years, need {required_years})"
-                )
-                penalties += 1
+def test_missing_fields():
+    """Test with minimal profile (missing optional fields)."""
+    print("\n" + "="*60)
+    print("TEST 3: Minimal Profile (Missing Fields)")
+    print("="*60)
+    
+    profile = {
+        "age": 30,
+        "education_level": "master",
+        "goal": "Work",
+        # Missing: funds, ielts, work_experience, etc.
+    }
+    
+    rules_list = load_rules()
+    agent = MatchAgent(rules_list)
+    results = agent.evaluate_all(profile)
+    
+    # Should still return results but with penalties
+    assert len(results) > 0, "Should handle missing fields gracefully"
+    
+    # Check that missing fields are noted in gaps
+    for r in results[:3]:
+        gaps = r["rule_gaps"]["missing_requirements"]
+        print(f"\n{r['country']}: {len(gaps)} gaps detected")
+        for gap in gaps[:2]:  # Show first 2
+            print(f"   - {gap}")
+    
+    print("[PASS] Test 3 Passed")
+    return results
 
-        # Calculate final score
-        score = max(0.0, 1.0 - penalties / self.MAX_PENALTIES)
 
-        # Determine status
-        if score >= self.SCORE_OK:
-            status = "OK"
-        elif score >= self.SCORE_BORDERLINE:
-            status = "Borderline"
-        else:
-            status = "High Risk"
+def test_all_pathways():
+    """Test filtering by different pathways."""
+    print("\n" + "="*60)
+    print("TEST 4: Different Pathways")
+    print("="*60)
+    
+    rules_list = load_rules()
+    agent = MatchAgent(rules_list)
+    
+    base_profile = {
+        "age": 28,
+        "education_level": "bachelor",
+        "ielts": 7.0,
+        "funds_usd": 20000,
+        "work_experience_years": 4,
+    }
+    
+    for goal in ["Study", "Work", "PR"]:
+        profile = {**base_profile, "goal": goal}
+        results = agent.evaluate_all(profile)
+        
+        # All results should match the goal
+        for r in results:
+            assert r["pathway"] == goal, f"Pathway mismatch: expected {goal}, got {r['pathway']}"
+        
+        print(f"\n{goal}: {len(results)} matches")
+    
+    print("[PASS] Test 4 Passed")
 
-        # Build gaps structure
-        gaps: Dict[str, Any] = {
-            "missing_requirements": missing,
-            "risk_status": "Risk" if risks else "No Risk",
-        }
-        if risks:
-            gaps["risks"] = risks
 
-        return status, score, gaps
+def run_all_tests():
+    """Run all manual tests."""
+    print("\n" + "="*60)
+    print("STARTING MATCH AGENT TESTS")
+    print("="*60)
+    
+    try:
+        test_valid_profile()
+        test_low_funds_profile()
+        test_missing_fields()
+        test_all_pathways()
+        
+        print("\n" + "="*60)
+        print("ALL TESTS PASSED")
+        print("="*60 + "\n")
+        
+    except AssertionError as e:
+        print(f"\n[FAIL] TEST FAILED: {e}\n")
+        exit(1)
+    except Exception as e:
+        print(f"\n[ERROR] UNEXPECTED ERROR: {e}\n")
+        import traceback
+        traceback.print_exc()
+        exit(1)
 
-    def evaluate_all(self, profile: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """
-        Evaluate profile against all rules.
 
-        Args:
-            profile: User profile dict
-
-        Returns:
-            List of MatchResult dicts
-        """
-        if not profile:
-            raise ValueError("Profile cannot be empty")
-
-        goal = profile.get("goal")
-        results: List[Dict[str, Any]] = []
-
-        for rule in self.rules:
-            pathway = rule.get("pathway")
-
-            # Filter by goal if specified
-            if goal and pathway and pathway.lower() != goal.lower():
-                continue
-
-            try:
-                status, score, gaps = self._score_single_rule(profile, rule)
-
-                result = {
-                    "country": rule.get("country"),
-                    "pathway": pathway,
-                    "status": status,
-                    "raw_score": score,
-                    "rule_gaps": gaps,
-                }
-                results.append(result)
-            except Exception as e:
-                # Log error but continue with other rules
-                print(f"Error evaluating {rule.get('country')}/{pathway}: {e}")
-                continue
-
-        return results
+if __name__ == "__main__":
+    run_all_tests()
