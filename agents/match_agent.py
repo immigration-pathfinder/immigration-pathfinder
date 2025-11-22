@@ -1,7 +1,8 @@
 # agents/match_agent.py
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 
 DEGREE_ORDER = {
+    "high school": 0,
     "high_school": 0,
     "diploma": 1,
     "bachelor": 2,
@@ -11,73 +12,91 @@ DEGREE_ORDER = {
 
 
 class MatchAgent:
-    """
-    Compare a flat UserProfile dict against a list of country/pathway rules
-    and produce a list of MatchResult dicts.
-    """
+    """Compare UserProfile against country/pathway rules."""
+    
+    # Scoring thresholds
+    SCORE_OK = 0.75
+    SCORE_BORDERLINE = 0.4
+    MAX_PENALTIES = 5
+    LARGE_FUNDS_GAP = 5000
 
     def __init__(self, rules: List[Dict[str, Any]]) -> None:
         """
         Args:
-            rules: List of rule dicts loaded from country_rules.json
+            rules: List of rule dicts from country_rules.json
         """
-        self.rules = rules or []
+        if not rules:
+            raise ValueError("Rules list cannot be empty")
+        self.rules = rules
+
+    def _normalize_degree(self, degree: str) -> str:
+        """Normalize degree name for comparison."""
+        if not degree:
+            return ""
+        return degree.lower().strip().replace(" ", "_")
 
     def _score_single_rule(
         self,
         profile: Dict[str, Any],
         rule: Dict[str, Any],
-    ) -> (str, float, Dict[str, Any]):
+    ) -> Tuple[str, float, Dict[str, Any]]:
         """
-        Compare one user profile against one rule.
+        Compare profile against one rule.
 
         Returns:
-            status: "OK" | "Borderline" | "High Risk"
-            score: float in [0, 1]
-            gaps: {"missing_requirements": [...], "risk_status": "...", "risks"?: [...]}
+            (status, score, gaps)
         """
         missing: List[str] = []
         risks: List[str] = []
         penalties = 0
-        max_penalties = 5  # tune later if needed
 
-        # ----- Age -----
+        # Age check
         age = profile.get("age")
         min_age = rule.get("minimum_age")
         max_age = rule.get("maximum_age") or rule.get("age_max")
 
         if age is not None:
-            if min_age is not None and age < min_age:
-                missing.append("Age below minimum requirement")
+            if min_age and age < min_age:
+                missing.append(f"Age {age} below minimum {min_age}")
                 penalties += 1
-            if max_age is not None and age > max_age:
-                missing.append("Age above maximum limit")
+            if max_age and age > max_age:
+                missing.append(f"Age {age} above maximum {max_age}")
                 penalties += 1
 
-        # ----- Degree level -----
-        profile_degree = profile.get("education_level")
-        required_degree = rule.get("min_degree") or rule.get("minimum_degree")
+        # Degree check
+        profile_degree = self._normalize_degree(profile.get("education_level", ""))
+        required_degree = self._normalize_degree(
+            rule.get("min_degree") or rule.get("minimum_degree", "")
+        )
+        
         if profile_degree and required_degree:
             profile_rank = DEGREE_ORDER.get(profile_degree, -1)
             required_rank = DEGREE_ORDER.get(required_degree, -1)
-            if profile_rank < required_rank:
+            
+            if profile_rank < 0:
+                missing.append(f"Unknown degree level: {profile_degree}")
+                penalties += 1
+            elif profile_rank < required_rank:
                 missing.append(
                     f"Degree '{profile_degree}' below required '{required_degree}'"
                 )
                 penalties += 1
 
-        # ----- IELTS / English level -----
+        # IELTS check
         profile_ielts = profile.get("ielts")
         required_ielts = rule.get("min_ielts") or rule.get("minimum_ielts")
 
-        if required_ielts is not None and profile_ielts is not None:
-            if profile_ielts < required_ielts:
+        if required_ielts is not None:
+            if profile_ielts is None:
+                missing.append("IELTS score not provided")
+                penalties += 1
+            elif profile_ielts < required_ielts:
                 missing.append(
-                    f"IELTS score {profile_ielts} below required {required_ielts}"
+                    f"IELTS {profile_ielts} below required {required_ielts}"
                 )
                 penalties += 1
 
-        # ----- Funds / income -----
+        # Funds check
         funds = profile.get("funds_usd")
         required_funds = (
             rule.get("min_funds_usd")
@@ -85,52 +104,50 @@ class MatchAgent:
             or rule.get("minimum_income_usd")
         )
 
-        if required_funds is not None and funds is not None:
-            if funds < required_funds:
-                missing.append(
-                    f"Insufficient funds (needs ≥ {required_funds} USD)"
-                )
+        if required_funds is not None:
+            if funds is None:
+                missing.append("Funds information not provided")
                 penalties += 1
-                # example: mark as a risk if funds gap is big
-                if required_funds - funds > 5000:
-                    risks.append("Large funds gap may increase visa refusal risk")
+            elif funds < required_funds:
+                gap = required_funds - funds
+                missing.append(f"Insufficient funds (need ${required_funds}, have ${funds})")
+                penalties += 1
+                
+                if gap > self.LARGE_FUNDS_GAP:
+                    risks.append(f"Large funds gap (${gap}) may increase visa refusal risk")
 
-        # ----- Work experience -----
+        # Work experience check
         years = profile.get("work_experience_years")
         required_years = (
             rule.get("work_experience_min_years")
             or rule.get("minimum_work_experience_years")
         )
 
-        if required_years is not None and years is not None:
-            if years < required_years:
+        if required_years is not None:
+            if years is None:
+                missing.append("Work experience not provided")
+                penalties += 1
+            elif years < required_years:
                 missing.append(
-                    f"Not enough work experience (needs {required_years} years)"
+                    f"Insufficient work experience ({years} years, need {required_years})"
                 )
                 penalties += 1
 
-        # ----- Final score & status -----
-        if max_penalties > 0:
-            score = max(0.0, 1.0 - penalties / max_penalties)
-        else:
-            score = 1.0
+        # Calculate final score
+        score = max(0.0, 1.0 - penalties / self.MAX_PENALTIES)
 
-        if score >= 0.75:
+        # Determine status
+        if score >= self.SCORE_OK:
             status = "OK"
-        elif score >= 0.4:
+        elif score >= self.SCORE_BORDERLINE:
             status = "Borderline"
         else:
             status = "High Risk"
 
-        # ----- Build gaps structure with risk status -----
-        if risks:
-            risk_status = "Risk"
-        else:
-            risk_status = "No Risk"
-
+        # Build gaps structure
         gaps: Dict[str, Any] = {
             "missing_requirements": missing,
-            "risk_status": risk_status,
+            "risk_status": "Risk" if risks else "No Risk",
         }
         if risks:
             gaps["risks"] = risks
@@ -139,30 +156,41 @@ class MatchAgent:
 
     def evaluate_all(self, profile: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
-        Evaluate the profile against all rules.
+        Evaluate profile against all rules.
 
-        - If profile["goal"] is set, only rules with matching pathway are considered.
-        - Returns a list of MatchResult dicts.
+        Args:
+            profile: User profile dict
+
+        Returns:
+            List of MatchResult dicts
         """
+        if not profile:
+            raise ValueError("Profile cannot be empty")
+
         goal = profile.get("goal")
         results: List[Dict[str, Any]] = []
 
         for rule in self.rules:
             pathway = rule.get("pathway")
 
-            # If user has a goal, filter by pathway
+            # Filter by goal if specified
             if goal and pathway and pathway.lower() != goal.lower():
                 continue
 
-            status, score, gaps = self._score_single_rule(profile, rule)
+            try:
+                status, score, gaps = self._score_single_rule(profile, rule)
 
-            result = {
-                "country": rule.get("country"),
-                "pathway": pathway,
-                "status": status,
-                "raw_score": score,
-                "rule_gaps": gaps,
-            }
-            results.append(result)
+                result = {
+                    "country": rule.get("country"),
+                    "pathway": pathway,
+                    "status": status,
+                    "raw_score": score,
+                    "rule_gaps": gaps,
+                }
+                results.append(result)
+            except Exception as e:
+                # Log error but continue with other rules
+                print(f"Error evaluating {rule.get('country')}/{pathway}: {e}")
+                continue
 
         return results
