@@ -1,4 +1,4 @@
-# tests/test_match_agent_manual.py
+# tests/test_match_agent.py
 import json
 from pathlib import Path
 from agents.match_agent import MatchAgent
