@@ -1,11 +1,16 @@
 # tests/test_match_agent.py
-import json
+import sys
 from pathlib import Path
+
+# IMPORTANT: Add project root to path
+PROJECT_ROOT = Path(__file__).parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+import json
 from agents.match_agent import MatchAgent
 
 
-# Find project root
-PROJECT_ROOT = Path(__file__).parent.parent
+# Find rules path
 RULES_PATH = PROJECT_ROOT / "rules" / "country_rules.json"
 
 
@@ -41,13 +46,13 @@ def print_results_summary(results):
         count = len(by_status[status])
         print(f"\n[{status}]: {count} countries")
         
-        for result in by_status[status][:3]:  # Show max 3 per status
+        for result in by_status[status][:3]:
             print(f"   - {result['country']} ({result['pathway']}): "
                   f"Score {result['raw_score']:.2f}")
             
             gaps = result['rule_gaps']['missing_requirements']
             if gaps:
-                print(f"     Gaps: {gaps[0]}")  # Show first gap
+                print(f"     Gaps: {gaps[0]}")
                 if len(gaps) > 1:
                     print(f"           + {len(gaps)-1} more...")
 
@@ -92,7 +97,6 @@ def test_valid_profile():
         assert "missing_requirements" in gaps, "Missing 'missing_requirements'"
         assert "risk_status" in gaps, "Missing 'risk_status'"
         
-        # If risk exists, risks list must be present
         if gaps["risk_status"] == "Risk":
             assert "risks" in gaps, "'risks' should exist when risk_status = Risk"
             assert isinstance(gaps["risks"], list), "'risks' must be a list"
@@ -113,7 +117,7 @@ def test_low_funds_profile():
         "citizenship": "Iran",
         "education_level": "bachelor",
         "ielts": 6.0,
-        "funds_usd": 5000,  # Low funds
+        "funds_usd": 5000,
         "work_experience_years": 1,
         "goal": "Study",
     }
@@ -122,7 +126,6 @@ def test_low_funds_profile():
     agent = MatchAgent(rules_list)
     results = agent.evaluate_all(profile)
     
-    # Should have some "High Risk" or "Borderline" results
     high_risk_count = sum(1 for r in results if r["status"] == "High Risk")
     print(f"\n[INFO] High Risk matches: {high_risk_count}")
     
@@ -142,21 +145,18 @@ def test_missing_fields():
         "age": 30,
         "education_level": "master",
         "goal": "Work",
-        # Missing: funds, ielts, work_experience, etc.
     }
     
     rules_list = load_rules()
     agent = MatchAgent(rules_list)
     results = agent.evaluate_all(profile)
     
-    # Should still return results but with penalties
     assert len(results) > 0, "Should handle missing fields gracefully"
     
-    # Check that missing fields are noted in gaps
     for r in results[:3]:
         gaps = r["rule_gaps"]["missing_requirements"]
         print(f"\n{r['country']}: {len(gaps)} gaps detected")
-        for gap in gaps[:2]:  # Show first 2
+        for gap in gaps[:2]:
             print(f"   - {gap}")
     
     print("[PASS] Test 3 Passed")
@@ -184,7 +184,6 @@ def test_all_pathways():
         profile = {**base_profile, "goal": goal}
         results = agent.evaluate_all(profile)
         
-        # All results should match the goal
         for r in results:
             assert r["pathway"] == goal, f"Pathway mismatch: expected {goal}, got {r['pathway']}"
         
@@ -221,4 +220,3 @@ def run_all_tests():
 
 if __name__ == "__main__":
     run_all_tests()
-
