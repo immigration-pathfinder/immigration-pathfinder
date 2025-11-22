@@ -1,59 +1,50 @@
 # agents/match_agent.py
 from typing import List, Dict, Any
 
-# -----------------------------------------------------------------------------
-# Degree Ranking System
-# -----------------------------------------------------------------------------
 DEGREE_ORDER = {
     "high_school": 0,
     "diploma": 1,
-    "associate": 1,
     "bachelor": 2,
     "master": 3,
     "phd": 4,
 }
 
-# -----------------------------------------------------------------------------
-# MatchAgent
-# -----------------------------------------------------------------------------
+
 class MatchAgent:
     """
-    MatchAgent compares a FLAT UserProfile dict with migration rules
-    and produces MatchResult dicts according to match_result.schema.json.
+    Compare a flat UserProfile dict against a list of country/pathway rules
+    and produce a list of MatchResult dicts.
     """
 
     def __init__(self, rules: List[Dict[str, Any]]) -> None:
         """
         Args:
-            rules: list of dicts loaded from country_rules.json
+            rules: List of rule dicts loaded from country_rules.json
         """
         self.rules = rules or []
 
-    # -------------------------------------------------------------------------
-    # Internal scoring of a single rule
-    # -------------------------------------------------------------------------
     def _score_single_rule(
         self,
         profile: Dict[str, Any],
         rule: Dict[str, Any],
     ) -> (str, float, Dict[str, Any]):
         """
-        Compare profile against one rule.
-        Output:
-            status: OK | Borderline | High Risk
-            raw_score: float 0–1
-            gaps: {missing_requirements: [...], risks: [...]}
-        """
+        Compare one user profile against one rule.
 
+        Returns:
+            status: "OK" | "Borderline" | "High Risk"
+            score: float in [0, 1]
+            gaps: {"missing_requirements": [...], "risk_status": "...", "risks"?: [...]}
+        """
         missing: List[str] = []
         risks: List[str] = []
         penalties = 0
-        max_penalties = 5  # weight system (can improve later)
+        max_penalties = 5  # tune later if needed
 
-        # ------------------------- Age ---------------------------------------
+        # ----- Age -----
         age = profile.get("age")
         min_age = rule.get("minimum_age")
-        max_age = rule.get("maximum_age")
+        max_age = rule.get("maximum_age") or rule.get("age_max")
 
         if age is not None:
             if min_age is not None and age < min_age:
@@ -63,17 +54,19 @@ class MatchAgent:
                 missing.append("Age above maximum limit")
                 penalties += 1
 
-        # ---------------------- Degree Level ---------------------------------
+        # ----- Degree level -----
         profile_degree = profile.get("education_level")
         required_degree = rule.get("min_degree") or rule.get("minimum_degree")
         if profile_degree and required_degree:
-            user_rank = DEGREE_ORDER.get(profile_degree, -1)
-            req_rank = DEGREE_ORDER.get(required_degree, -1)
-            if user_rank < req_rank:
-                missing.append(f"Degree '{profile_degree}' below required '{required_degree}'")
+            profile_rank = DEGREE_ORDER.get(profile_degree, -1)
+            required_rank = DEGREE_ORDER.get(required_degree, -1)
+            if profile_rank < required_rank:
+                missing.append(
+                    f"Degree '{profile_degree}' below required '{required_degree}'"
+                )
                 penalties += 1
 
-        # ----------------------- IELTS Score ---------------------------------
+        # ----- IELTS / English level -----
         profile_ielts = profile.get("ielts")
         required_ielts = rule.get("min_ielts") or rule.get("minimum_ielts")
 
@@ -84,7 +77,7 @@ class MatchAgent:
                 )
                 penalties += 1
 
-        # ----------------------- Funds / Income -------------------------------
+        # ----- Funds / income -----
         funds = profile.get("funds_usd")
         required_funds = (
             rule.get("min_funds_usd")
@@ -98,22 +91,25 @@ class MatchAgent:
                     f"Insufficient funds (needs ≥ {required_funds} USD)"
                 )
                 penalties += 1
+                # example: mark as a risk if funds gap is big
+                if required_funds - funds > 5000:
+                    risks.append("Large funds gap may increase visa refusal risk")
 
-        # ------------------------ Work Experience -----------------------------
-        years_exp = profile.get("work_experience_years")
+        # ----- Work experience -----
+        years = profile.get("work_experience_years")
         required_years = (
             rule.get("work_experience_min_years")
             or rule.get("minimum_work_experience_years")
         )
 
-        if required_years is not None and years_exp is not None:
-            if years_exp < required_years:
+        if required_years is not None and years is not None:
+            if years < required_years:
                 missing.append(
-                    f"Not enough work experience (needs ≥ {required_years} years)"
+                    f"Not enough work experience (needs {required_years} years)"
                 )
                 penalties += 1
 
-        # ----------------------- Compute Score --------------------------------
+        # ----- Final score & status -----
         if max_penalties > 0:
             score = max(0.0, 1.0 - penalties / max_penalties)
         else:
@@ -126,21 +122,27 @@ class MatchAgent:
         else:
             status = "High Risk"
 
-        gaps = {
+        # ----- Build gaps structure with risk status -----
+        if risks:
+            risk_status = "Risk"
+        else:
+            risk_status = "No Risk"
+
+        gaps: Dict[str, Any] = {
             "missing_requirements": missing,
-            "risks": risks,
+            "risk_status": risk_status,
         }
+        if risks:
+            gaps["risks"] = risks
 
         return status, score, gaps
 
-    # -------------------------------------------------------------------------
-    # Evaluate all rules for a given user profile
-    # -------------------------------------------------------------------------
     def evaluate_all(self, profile: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
-        Evaluate the profile against rules.
+        Evaluate the profile against all rules.
 
-        If profile["goal"] exists, we filter rules by pathway == goal.
+        - If profile["goal"] is set, only rules with matching pathway are considered.
+        - Returns a list of MatchResult dicts.
         """
         goal = profile.get("goal")
         results: List[Dict[str, Any]] = []
@@ -148,7 +150,7 @@ class MatchAgent:
         for rule in self.rules:
             pathway = rule.get("pathway")
 
-            # filter by goal:
+            # If user has a goal, filter by pathway
             if goal and pathway and pathway.lower() != goal.lower():
                 continue
 
@@ -161,7 +163,6 @@ class MatchAgent:
                 "raw_score": score,
                 "rule_gaps": gaps,
             }
-
             results.append(result)
 
         return results
