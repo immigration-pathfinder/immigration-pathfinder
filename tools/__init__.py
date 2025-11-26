@@ -1,7 +1,15 @@
 """
 Tools package.
 
-Utility modules such as Logger and search helpers.
+Contains reusable tools such as:
+- SearchTool
+- FundsGapCalculator
 """
 
-from .logger import Logger
+from .search_tool import SearchTool
+from .funds_gap_calculator import FundsGapCalculator
+
+__all__ = [
+    "SearchTool",
+    "FundsGapCalculator",
+]
