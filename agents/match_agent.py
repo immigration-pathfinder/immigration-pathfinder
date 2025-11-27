@@ -279,7 +279,7 @@ class MatchAgent:
                 # اگر یکی از رول‌ها خطا داد، بقیه همچنان بررسی شوند
                 continue
 
-        # لاگ خروجی سطح بالا
+       
         if self.logger:
             try:
                 self.logger.log_tool_call(
