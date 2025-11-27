@@ -177,14 +177,13 @@ class MatchAgent:
         Args:
             profile: User profile dict
 
-        Returns:python -m agents.match_agent
-
+        Returns:
             List of MatchResult dicts
         """
         if not profile:
             raise ValueError("Profile cannot be empty")
 
-        # ---- Logging (safe) ----
+        # ---- Logging (خیلی کوتاه و safe) ----
         if self.logger:
             self.logger.log_agent_call(
                 agent_name="MatchAgent",
