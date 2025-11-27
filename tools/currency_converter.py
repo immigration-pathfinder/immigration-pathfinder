@@ -1,7 +1,16 @@
 # tools/currency_converter.py
+import sys
+from pathlib import Path
+
+# Add project root so we can import tools, rules, agents, ...
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from typing import Dict, Any, Optional
 from datetime import datetime
+
+from tools.logger import Logger  # 🔹 لاگر سبک اضافه شد
 
 
 class CurrencyConverter:
@@ -20,6 +29,7 @@ class CurrencyConverter:
             last_updated: Optional custom update date (default: 2024-11-24)
         """
         self.last_updated = last_updated or "2024-11-24"
+        self.logger = Logger()  # 🔹 یک لاگر برای این تول
         
         # Exchange rates: 1 unit of currency ≈ rate USD
         self.rates_to_usd: Dict[str, float] = {
@@ -63,6 +73,11 @@ class CurrencyConverter:
         }
         
         print(f"[INFO] Currency rates initialized (last updated: {self.last_updated})")
+        # می‌تونیم اینو هم داشته باشیم، ولی فقط یک‌بار موقع ساخت شی لاگ می‌ده:
+        self.logger.log_tool_call(
+            "CurrencyConverter.__init__",
+            {"last_updated": self.last_updated, "currency_count": len(self.rates_to_usd)},
+        )
     
     def convert(
         self,
@@ -239,6 +254,17 @@ class CurrencyConverter:
         self.last_updated = datetime.now().strftime("%Y-%m-%d")
         
         print(f"[INFO] Updated {currency} rate: {old_rate} → {rate} (source: {source})")
+        # 🔹 فقط یک لاگ سطح بالا
+        self.logger.log_tool_call(
+            "CurrencyConverter.update_rate",
+            {
+                "currency": currency,
+                "old_rate": old_rate,
+                "new_rate": rate,
+                "source": source,
+                "last_updated": self.last_updated,
+            },
+        )
     
     def bulk_convert(
         self,
@@ -259,12 +285,23 @@ class CurrencyConverter:
             >>> converter.bulk_convert({"EUR": 1000, "GBP": 500, "CAD": 2000})
             {"EUR": 1100.0, "GBP": 635.0, "CAD": 1500.0}
         """
+        # 🔹 ورودی کلی رو لاگ کن، نه تک‌تک convertها
+        self.logger.log_tool_call(
+            "CurrencyConverter.bulk_convert",
+            {"len_amounts": len(amounts), "to_curr": to_curr},
+        )
+
         results = {}
         
         for currency, amount in amounts.items():
             try:
                 results[currency] = self.convert(amount, currency, to_curr)
             except ValueError as e:
+                # 🔹 فقط خطاها لاگ شوند
+                self.logger.log_exception(
+                    error=e,
+                    context=f"CurrencyConverter.bulk_convert:{currency}",
+                )
                 results[currency] = f"Error: {e}"
         
         return results
@@ -290,12 +327,23 @@ class CurrencyConverter:
                 "weakest": str
             }
         """
+        # 🔹 فقط ورودی کلی لاگ می‌شود
+        self.logger.log_tool_call(
+            "CurrencyConverter.compare_currencies",
+            {"amount": amount, "currencies_count": len(currencies)},
+        )
+
         conversions = {}
         
         for currency in currencies:
             try:
                 conversions[currency] = self.convert(amount, "USD", currency)
-            except ValueError:
+            except ValueError as e:
+                # 🔹 ارورها ثبت لاگ بشود، ولی رفتار تابع عوض نشود
+                self.logger.log_exception(
+                    error=e,
+                    context=f"CurrencyConverter.compare_currencies:{currency}",
+                )
                 pass
         
         if not conversions:
