@@ -1,5 +1,16 @@
 # agents/match_agent.py
-from typing import List, Dict, Any, Tuple
+
+import sys
+from pathlib import Path
+
+# Add project root so we can import tools, rules, agents, ...
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from typing import List, Dict, Any, Tuple, Optional
+from tools.logger import Logger
+
 
 DEGREE_ORDER = {
     "high school": 0,
@@ -13,14 +24,14 @@ DEGREE_ORDER = {
 
 class MatchAgent:
     """Compare UserProfile against country/pathway rules."""
-    
+
     # Scoring thresholds
     SCORE_OK = 0.75
     SCORE_BORDERLINE = 0.4
     MAX_PENALTIES = 5
     LARGE_FUNDS_GAP = 5000
 
-    def __init__(self, rules: List[Dict[str, Any]]) -> None:
+    def __init__(self, rules: List[Dict[str, Any]], logger: Optional[Logger] = None) -> None:
         """
         Args:
             rules: List of rule dicts from country_rules.json
@@ -28,6 +39,7 @@ class MatchAgent:
         if not rules:
             raise ValueError("Rules list cannot be empty")
         self.rules = rules
+        self.logger = logger or Logger()
 
     def _normalize_degree(self, degree: str) -> str:
         """Normalize degree name for comparison."""
@@ -68,11 +80,11 @@ class MatchAgent:
         required_degree = self._normalize_degree(
             rule.get("min_degree") or rule.get("minimum_degree", "")
         )
-        
+
         if profile_degree and required_degree:
             profile_rank = DEGREE_ORDER.get(profile_degree, -1)
             required_rank = DEGREE_ORDER.get(required_degree, -1)
-            
+
             if profile_rank < 0:
                 missing.append(f"Unknown degree level: {profile_degree}")
                 penalties += 1
@@ -110,11 +122,15 @@ class MatchAgent:
                 penalties += 1
             elif funds < required_funds:
                 gap = required_funds - funds
-                missing.append(f"Insufficient funds (need ${required_funds}, have ${funds})")
+                missing.append(
+                    f"Insufficient funds (need ${required_funds}, have ${funds})"
+                )
                 penalties += 1
-                
+
                 if gap > self.LARGE_FUNDS_GAP:
-                    risks.append(f"Large funds gap (${gap}) may increase visa refusal risk")
+                    risks.append(
+                        f"Large funds gap (${gap}) may increase visa refusal risk"
+                    )
 
         # Work experience check
         years = profile.get("work_experience_years")
@@ -161,11 +177,24 @@ class MatchAgent:
         Args:
             profile: User profile dict
 
-        Returns:
+        Returns:python -m agents.match_agent
+
             List of MatchResult dicts
         """
         if not profile:
             raise ValueError("Profile cannot be empty")
+
+        # ---- Logging (safe) ----
+        if self.logger:
+            self.logger.log_agent_call(
+                agent_name="MatchAgent",
+                session_id=None,
+                input_summary=str({
+                    "goal": profile.get("goal"),
+                    "age": profile.get("age"),
+                    "citizenship": profile.get("citizenship"),
+                })[:160],
+            )
 
         goal = profile.get("goal")
         results: List[Dict[str, Any]] = []
@@ -189,8 +218,12 @@ class MatchAgent:
                 }
                 results.append(result)
             except Exception as e:
-                # Log error but continue with other rules
-                print(f"Error evaluating {rule.get('country')}/{pathway}: {e}")
+                # Use logger instead of print
+                if self.logger:
+                    self.logger.log_exception(
+                        error=e,
+                        context=f"MatchAgent evaluating {rule.get('country')}/{pathway}",
+                    )
                 continue
 
         return results
