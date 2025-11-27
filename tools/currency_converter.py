@@ -1,15 +1,7 @@
-import sys
-from pathlib import Path
-
-# Add project root so we can import tools, rules, agents, ...
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))# tools/currency_converter.py
+# tools/currency_converter.py
 
 from typing import Dict, Any, Optional
 from datetime import datetime
-
-from tools.logger import Logger  
 
 
 class CurrencyConverter:
@@ -27,7 +19,6 @@ class CurrencyConverter:
         Args:
             last_updated: Optional custom update date (default: 2024-11-24)
         """
-        self.logger = Logger()  # ✅ لاگر فقط اینجاست
         self.last_updated = last_updated or "2024-11-24"
         
         # Exchange rates: 1 unit of currency ≈ rate USD
@@ -72,11 +63,6 @@ class CurrencyConverter:
         }
         
         print(f"[INFO] Currency rates initialized (last updated: {self.last_updated})")
-        # ✅ فقط یه لاگ ساده کنار پرینت
-        self.logger.log_tool_call(
-            "CurrencyConverter.__init__",
-            {"last_updated": self.last_updated, "currency_count": len(self.rates_to_usd)},
-        )
     
     def convert(
         self,
@@ -100,17 +86,6 @@ class CurrencyConverter:
         Raises:
             ValueError: If amount is negative or currency is unsupported
         """
-        # ✅ فقط لاگ، بدون تغییر منطق
-        self.logger.log_tool_call(
-            "CurrencyConverter.convert",
-            {
-                "amount": amount,
-                "from_curr": from_curr,
-                "to_curr": to_curr,
-                "decimals": decimals,
-            },
-        )
-
         if amount < 0:
             raise ValueError("Amount must be non-negative.")
         
@@ -157,10 +132,6 @@ class CurrencyConverter:
         Returns:
             Amount in USD
         """
-        self.logger.log_tool_call(
-            "CurrencyConverter.normalize_to_usd",
-            {"amount": amount, "currency": currency},
-        )
         return self.convert(amount, currency, "USD")
     
     def convert_with_info(
@@ -188,11 +159,6 @@ class CurrencyConverter:
                 "calculation": str
             }
         """
-        self.logger.log_tool_call(
-            "CurrencyConverter.convert_with_info",
-            {"amount": amount, "from_curr": from_curr, "to_curr": to_curr},
-        )
-
         converted = self.convert(amount, from_curr, to_curr)
         
         from_curr = from_curr.upper()
@@ -220,10 +186,6 @@ class CurrencyConverter:
         Returns:
             Dictionary of {currency_code: rate_to_usd}
         """
-        self.logger.log_tool_call(
-            "CurrencyConverter.get_supported_currencies",
-            {"count": len(self.rates_to_usd)},
-        )
         return self.rates_to_usd.copy()
     
     def get_currency_info(self, currency: str) -> Dict[str, Any]:
@@ -243,10 +205,6 @@ class CurrencyConverter:
             }
         """
         currency = currency.upper()
-        self.logger.log_tool_call(
-            "CurrencyConverter.get_currency_info",
-            {"currency": currency},
-        )
         
         if currency not in self.rates_to_usd:
             return {
@@ -281,16 +239,6 @@ class CurrencyConverter:
         self.last_updated = datetime.now().strftime("%Y-%m-%d")
         
         print(f"[INFO] Updated {currency} rate: {old_rate} → {rate} (source: {source})")
-        self.logger.log_tool_call(
-            "CurrencyConverter.update_rate",
-            {
-                "currency": currency,
-                "old_rate": old_rate,
-                "new_rate": rate,
-                "source": source,
-                "last_updated": self.last_updated,
-            },
-        )
     
     def bulk_convert(
         self,
@@ -311,10 +259,6 @@ class CurrencyConverter:
             >>> converter.bulk_convert({"EUR": 1000, "GBP": 500, "CAD": 2000})
             {"EUR": 1100.0, "GBP": 635.0, "CAD": 1500.0}
         """
-        self.logger.log_tool_call(
-            "CurrencyConverter.bulk_convert",
-            {"len_amounts": len(amounts), "to_curr": to_curr},
-        )
         results = {}
         
         for currency, amount in amounts.items():
@@ -346,18 +290,12 @@ class CurrencyConverter:
                 "weakest": str
             }
         """
-        self.logger.log_tool_call(
-            "CurrencyConverter.compare_currencies",
-            {"amount": amount, "currencies_count": len(currencies)},
-        )
-
         conversions = {}
         
         for currency in currencies:
             try:
                 conversions[currency] = self.convert(amount, "USD", currency)
             except ValueError:
-                # مثل قبل، فقط رد می‌شه، لاجیک عوض نشد
                 pass
         
         if not conversions:
