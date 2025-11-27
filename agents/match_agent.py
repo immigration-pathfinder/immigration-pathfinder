@@ -52,8 +52,7 @@ class MatchAgent:
 
         self.rules = rules
 
-        # اگر بیرون Logger داده باشی همون استفاده میشه؛
-        # در غیر این صورت فقط وقتی LOGGING_ENABLED=True و Logger موجود باشد ساخته می‌شود.
+    
         if logger is not None:
             self.logger = logger
         elif Logger and LOGGING_ENABLED:
@@ -199,7 +198,6 @@ class MatchAgent:
         if risks:
             gaps["risks"] = risks
 
-        # لاگ خیلی کوتاه برای هر رول، فقط اگر لاگ روشن است
         if self.logger:
             try:
                 self.logger.log_tool_call(
