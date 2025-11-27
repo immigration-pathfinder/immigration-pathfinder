@@ -274,7 +274,6 @@ class MatchAgent:
                         error=e,
                         context=f"MatchAgent.evaluate_all {rule.get('country')}/{pathway}",
                     )
-                # اگر یکی از رول‌ها خطا داد، بقیه همچنان بررسی شوند
                 continue
 
        
