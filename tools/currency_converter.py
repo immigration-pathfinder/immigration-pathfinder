@@ -3,6 +3,8 @@
 from typing import Dict, Any, Optional
 from datetime import datetime
 
+from tools.logger import Logger  # 🔹 اضافه شد
+
 
 class CurrencyConverter:
     """
@@ -19,6 +21,7 @@ class CurrencyConverter:
         Args:
             last_updated: Optional custom update date (default: 2024-11-24)
         """
+        self.logger = Logger()  # 🔹 لاگر مخصوص این تول
         self.last_updated = last_updated or "2024-11-24"
         
         # Exchange rates: 1 unit of currency ≈ rate USD
@@ -62,7 +65,11 @@ class CurrencyConverter:
             "RUB": 0.010,   # Russian Ruble
         }
         
-        print(f"[INFO] Currency rates initialized (last updated: {self.last_updated})")
+        # قبلاً print بود، حالا لاگ تول:
+        self.logger.log_tool_call(
+            "CurrencyConverter.__init__",
+            {"last_updated": self.last_updated, "currency_count": len(self.rates_to_usd)}
+        )
     
     def convert(
         self,
@@ -86,40 +93,55 @@ class CurrencyConverter:
         Raises:
             ValueError: If amount is negative or currency is unsupported
         """
-        if amount < 0:
-            raise ValueError("Amount must be non-negative.")
-        
-        if amount == 0:
-            return 0.0
-        
-        # Validate very large amounts
-        if amount > 1e12:
-            raise ValueError("Amount is unrealistically large (> 1 trillion).")
-        
-        from_curr = from_curr.upper()
-        to_curr = to_curr.upper()
-        
-        if from_curr not in self.rates_to_usd:
-            raise ValueError(
-                f"Unsupported source currency: {from_curr}. "
-                f"Supported: {self._get_supported_list()}"
+        try:
+            self.logger.log_tool_call(
+                "CurrencyConverter.convert",
+                {
+                    "amount": amount,
+                    "from_curr": from_curr,
+                    "to_curr": to_curr,
+                    "decimals": decimals,
+                },
             )
-        
-        if to_curr not in self.rates_to_usd:
-            raise ValueError(
-                f"Unsupported target currency: {to_curr}. "
-                f"Supported: {self._get_supported_list()}"
-            )
-        
-        # Convert: source → USD → target
-        amount_in_usd = amount * self.rates_to_usd[from_curr]
-        
-        if to_curr == "USD":
-            target_amount = amount_in_usd
-        else:
-            target_amount = amount_in_usd / self.rates_to_usd[to_curr]
-        
-        return round(target_amount, decimals)
+
+            if amount < 0:
+                raise ValueError("Amount must be non-negative.")
+            
+            if amount == 0:
+                return 0.0
+            
+            # Validate very large amounts
+            if amount > 1e12:
+                raise ValueError("Amount is unrealistically large (> 1 trillion).")
+            
+            from_curr = from_curr.upper()
+            to_curr = to_curr.upper()
+            
+            if from_curr not in self.rates_to_usd:
+                raise ValueError(
+                    f"Unsupported source currency: {from_curr}. "
+                    f"Supported: {self._get_supported_list()}"
+                )
+            
+            if to_curr not in self.rates_to_usd:
+                raise ValueError(
+                    f"Unsupported target currency: {to_curr}. "
+                    f"Supported: {self._get_supported_list()}"
+                )
+            
+            # Convert: source → USD → target
+            amount_in_usd = amount * self.rates_to_usd[from_curr]
+            
+            if to_curr == "USD":
+                target_amount = amount_in_usd
+            else:
+                target_amount = amount_in_usd / self.rates_to_usd[to_curr]
+            
+            return round(target_amount, decimals)
+
+        except Exception as e:
+            self.logger.log_exception(e, "CurrencyConverter.convert")
+            raise
     
     def normalize_to_usd(self, amount: float, currency: str) -> float:
         """
@@ -132,6 +154,10 @@ class CurrencyConverter:
         Returns:
             Amount in USD
         """
+        self.logger.log_tool_call(
+            "CurrencyConverter.normalize_to_usd",
+            {"amount": amount, "currency": currency},
+        )
         return self.convert(amount, currency, "USD")
     
     def convert_with_info(
@@ -159,25 +185,34 @@ class CurrencyConverter:
                 "calculation": str
             }
         """
-        converted = self.convert(amount, from_curr, to_curr)
-        
-        from_curr = from_curr.upper()
-        to_curr = to_curr.upper()
-        
-        # Get exchange rate
-        rate_from = self.rates_to_usd[from_curr]
-        rate_to = self.rates_to_usd[to_curr]
-        effective_rate = rate_from / rate_to
-        
-        return {
-            "original_amount": amount,
-            "original_currency": from_curr,
-            "converted_amount": converted,
-            "converted_currency": to_curr,
-            "exchange_rate": round(effective_rate, 6),
-            "last_updated": self.last_updated,
-            "calculation": f"{amount} {from_curr} × {effective_rate:.4f} = {converted} {to_curr}"
-        }
+        try:
+            self.logger.log_tool_call(
+                "CurrencyConverter.convert_with_info",
+                {"amount": amount, "from_curr": from_curr, "to_curr": to_curr},
+            )
+
+            converted = self.convert(amount, from_curr, to_curr)
+            
+            from_curr = from_curr.upper()
+            to_curr = to_curr.upper()
+            
+            # Get exchange rate
+            rate_from = self.rates_to_usd[from_curr]
+            rate_to = self.rates_to_usd[to_curr]
+            effective_rate = rate_from / rate_to
+            
+            return {
+                "original_amount": amount,
+                "original_currency": from_curr,
+                "converted_amount": converted,
+                "converted_currency": to_curr,
+                "exchange_rate": round(effective_rate, 6),
+                "last_updated": self.last_updated,
+                "calculation": f"{amount} {from_curr} × {effective_rate:.4f} = {converted} {to_curr}",
+            }
+        except Exception as e:
+            self.logger.log_exception(e, "CurrencyConverter.convert_with_info")
+            raise
     
     def get_supported_currencies(self) -> Dict[str, float]:
         """
@@ -186,6 +221,10 @@ class CurrencyConverter:
         Returns:
             Dictionary of {currency_code: rate_to_usd}
         """
+        self.logger.log_tool_call(
+            "CurrencyConverter.get_supported_currencies",
+            {"count": len(self.rates_to_usd)},
+        )
         return self.rates_to_usd.copy()
     
     def get_currency_info(self, currency: str) -> Dict[str, Any]:
@@ -204,25 +243,33 @@ class CurrencyConverter:
                 "last_updated": str
             }
         """
-        currency = currency.upper()
-        
-        if currency not in self.rates_to_usd:
+        try:
+            currency = currency.upper()
+            self.logger.log_tool_call(
+                "CurrencyConverter.get_currency_info",
+                {"currency": currency},
+            )
+            
+            if currency not in self.rates_to_usd:
+                return {
+                    "code": currency,
+                    "supported": False,
+                    "message": f"Currency not supported. Try: {self._get_supported_list()}",
+                }
+            
+            rate = self.rates_to_usd[currency]
+            
             return {
                 "code": currency,
-                "supported": False,
-                "message": f"Currency not supported. Try: {self._get_supported_list()}"
+                "rate_to_usd": rate,
+                "usd_to_currency": round(1 / rate, 6) if rate > 0 else 0,
+                "supported": True,
+                "last_updated": self.last_updated,
+                "example": f"1 {currency} = {rate} USD, 1 USD = {round(1/rate, 2)} {currency}",
             }
-        
-        rate = self.rates_to_usd[currency]
-        
-        return {
-            "code": currency,
-            "rate_to_usd": rate,
-            "usd_to_currency": round(1 / rate, 6) if rate > 0 else 0,
-            "supported": True,
-            "last_updated": self.last_updated,
-            "example": f"1 {currency} = {rate} USD, 1 USD = {round(1/rate, 2)} {currency}"
-        }
+        except Exception as e:
+            self.logger.log_exception(e, "CurrencyConverter.get_currency_info")
+            raise
     
     def update_rate(self, currency: str, rate: float, source: str = "manual"):
         """
@@ -233,12 +280,26 @@ class CurrencyConverter:
             rate: New rate (1 unit of currency ≈ rate USD)
             source: Source of the rate (e.g., "manual", "api")
         """
-        currency = currency.upper()
-        old_rate = self.rates_to_usd.get(currency, "N/A")
-        self.rates_to_usd[currency] = rate
-        self.last_updated = datetime.now().strftime("%Y-%m-%d")
-        
-        print(f"[INFO] Updated {currency} rate: {old_rate} → {rate} (source: {source})")
+        try:
+            currency = currency.upper()
+            old_rate = self.rates_to_usd.get(currency, "N/A")
+            self.rates_to_usd[currency] = rate
+            self.last_updated = datetime.now().strftime("%Y-%m-%d")
+            
+            # به‌جای print:
+            self.logger.log_tool_call(
+                "CurrencyConverter.update_rate",
+                {
+                    "currency": currency,
+                    "old_rate": old_rate,
+                    "new_rate": rate,
+                    "source": source,
+                    "last_updated": self.last_updated,
+                },
+            )
+        except Exception as e:
+            self.logger.log_exception(e, "CurrencyConverter.update_rate")
+            raise
     
     def bulk_convert(
         self,
@@ -259,12 +320,21 @@ class CurrencyConverter:
             >>> converter.bulk_convert({"EUR": 1000, "GBP": 500, "CAD": 2000})
             {"EUR": 1100.0, "GBP": 635.0, "CAD": 1500.0}
         """
-        results = {}
+        self.logger.log_tool_call(
+            "CurrencyConverter.bulk_convert",
+            {
+                "currency_count": len(amounts),
+                "to_curr": to_curr,
+            },
+        )
+        results: Dict[str, float] = {}
         
         for currency, amount in amounts.items():
             try:
                 results[currency] = self.convert(amount, currency, to_curr)
             except ValueError as e:
+                # به‌جای کرش، خطا توی نتیجه برگرده:
+                self.logger.log_exception(e, f"CurrencyConverter.bulk_convert:{currency}")
                 results[currency] = f"Error: {e}"
         
         return results
@@ -290,29 +360,43 @@ class CurrencyConverter:
                 "weakest": str
             }
         """
-        conversions = {}
-        
-        for currency in currencies:
-            try:
-                conversions[currency] = self.convert(amount, "USD", currency)
-            except ValueError:
-                pass
-        
-        if not conversions:
-            return {"error": "No valid currencies provided"}
-        
-        # Find strongest (least amount) and weakest (most amount)
-        strongest = min(conversions, key=conversions.get)
-        weakest = max(conversions, key=conversions.get)
-        
-        return {
-            "base_amount": amount,
-            "base_currency": "USD",
-            "conversions": conversions,
-            "strongest": strongest,
-            "weakest": weakest,
-            "last_updated": self.last_updated
-        }
+        try:
+            self.logger.log_tool_call(
+                "CurrencyConverter.compare_currencies",
+                {"amount": amount, "currencies_count": len(currencies)},
+            )
+
+            conversions: Dict[str, float] = {}
+            
+            for currency in currencies:
+                try:
+                    conversions[currency] = self.convert(amount, "USD", currency)
+                except ValueError as e:
+                    self.logger.log_exception(
+                        e,
+                        f"CurrencyConverter.compare_currencies:{currency}",
+                    )
+                    # این currency رو رد می‌کنیم
+                    pass
+            
+            if not conversions:
+                return {"error": "No valid currencies provided"}
+            
+            # Find strongest (least amount) and weakest (most amount)
+            strongest = min(conversions, key=conversions.get)
+            weakest = max(conversions, key=conversions.get)
+            
+            return {
+                "base_amount": amount,
+                "base_currency": "USD",
+                "conversions": conversions,
+                "strongest": strongest,
+                "weakest": weakest,
+                "last_updated": self.last_updated,
+            }
+        except Exception as e:
+            self.logger.log_exception(e, "CurrencyConverter.compare_currencies")
+            raise
     
     # ============== Internal Methods ==============
     
