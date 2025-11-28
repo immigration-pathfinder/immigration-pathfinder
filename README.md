@@ -21,20 +21,22 @@ Built for:
 
 ## 🧠 System Architecture (4-Agent Pipeline)
 
-User Input
-↓
-ProfileAgent → UserProfile JSON
-↓
-MatchAgent → MatchResult[]
-↓
-CountryFinderAgent → Scores & Ranking
-↓
-ExplainAgent → Final Explanation
+1. ProfileAgent  
+   ↳ Converts raw user text into structured UserProfile JSON
 
-yaml
-Copy code
+2. MatchAgent  
+   ↳ Compares UserProfile against country rules → MatchResult[]
+
+3. CountryFinderAgent  
+   ↳ Computes weighted scores & ranking
+
+4. ExplainAgent  
+   ↳ Produces the final explanation for the user
+
+➡️ Final Output: Best countries + reasoning + actionable next steps
 
 Each component is fully decoupled and extendable.
+
 
 ---
 
@@ -77,36 +79,40 @@ immigration-pathfinder/
 ## 🧩 Agent Descriptions
 
 ### **1. ProfileAgent**
+
 Extract raw text → structured JSON.
+
+Example Output:
+
+```
 {
-"age": 27,
-"citizenship": "Iran",
-"education_level": "Bachelor",
-"field": "Electrical Engineering",
-"ielts": 6.5,
-"funds_usd": 18000,
-"work_experience_years": 3,
-"goal": "Study"
+  "age": 27,
+  "citizenship": "Iran",
+  "education_level": "Bachelor",
+  "field": "Electrical Engineering",
+  "ielts": 6.5,
+  "funds_usd": 18000,
+  "work_experience_years": 3,
+  "goal": "Study"
 }
 
-yaml
-Copy code
-
+```
 ---
 
 ### **2. MatchAgent**
-Compare `UserProfile` against country rules and output:
+Compare UserProfile against country rules and output:
 
+Example Output:
+
+```
 {
-"country": "Canada",
-"pathway": "Study",
-"status": "OK",
-"rule_gaps": [],
-"raw_score": 0.88
+  "country": "Canada",
+  "pathway": "Study",
+  "status": "OK",
+  "rule_gaps": [],
+  "raw_score": 0.88
 }
-
-yaml
-Copy code
+```
 
 ---
 
@@ -123,33 +129,86 @@ Weighted scoring system:
 | Cost of living | 10% |
 | Job market | 5% |
 
-Output example:
+Takes MatchResults[] → Computes final scores & categories.
 
+Example Output:
+```
 {
-"best_options": ["Canada", "Netherlands"],
-"acceptable": ["Germany", "Ireland"],
-"scores": { "Canada": 92, "Netherlands": 87 }
+  "best_options": ["Canada", "Netherlands"],
+  "acceptable": ["Germany", "Ireland"],
+  "not_recommended": ["USA"],
+  "scores": {
+    "Canada": 92,
+    "Netherlands": 87,
+    "Germany": 74,
+    "Ireland": 70,
+    "USA": 48
+  }
 }
-
-yaml
-Copy code
+```
 
 ---
 
 ### **4. ExplainAgent**
-Creates friendly output:
+Generate natural-language explanations based on the user profile and scoring results.
 
-- Summary of user profile  
-- Recommended countries  
-- Why each score is high/low  
-- Strengths & gaps  
+The agent provides:
 
+Summary of the user profile
+
+Recommended countries
+
+Reasoning behind each score (high/low)
+
+Strengths and gaps
+
+Overall guidance
+
+Example Output:
+```
+Based on your funds, language level, and study goal, Canada and the Netherlands are the strongest options.
+
+• Canada: High eligibility due to strong finances and suitable study pathways  
+• Netherlands: Good match with your academic background and English level  
+• Germany: Possible but limited due to language gap
+
+Strengths: Good financial capacity, Bachelor’s degree, clear study goal  
+Gaps: Limited German proficiency, moderate work experience
+```
 ---
 
 ## 🛠 Tools & Utilities
-- **Google Search Tool (ADK/MCP)** – retrieve non-legal high-level info  
-- **Funds Gap Calculator**  
-- **Currency utilities**  
+
+### 🔍 Search Tool
+
+Retrieves high-level, non-legal immigration information using ADK/MCP.
+
+Used for:
+ 
+- **Visa difficulty descriptions**
+
+- **Job market trends**
+
+- **Country-level summaries**
+
+### 💰 Funds Gap Calculator
+
+Determines whether the user meets minimum financial thresholds for each country/pathway.
+
+Outputs:
+
+- **Required amount**
+
+- **User’s available funds**
+
+- **Gap (if any)**
+
+- **Recommendation (OK / Shortfall Amount)**
+
+ ### 💱 Currency Converter (Optional)
+
+Normalizes any given currency → USD
+Helps maintain consistent rule comparison.
 
 ---
 
