@@ -1,6 +1,27 @@
+import sys
+from pathlib import Path
 from typing import Any, Dict, Optional, List
 import re
-from tools.logger import Logger
+
+# ----------------------------------------------------
+# اختیاری: اگر خواستی مستقل هم ران بشه، روت پروژه رو اضافه کن
+# ----------------------------------------------------
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+# ----------------------------------------------------
+# LOGGER (safe import + toggle)
+# ----------------------------------------------------
+try:
+    from tools.logger import Logger, LOGGING_ENABLED as LOGGER_DEFAULT_ENABLED
+except Exception:
+    Logger = None            # type: ignore
+    LOGGER_DEFAULT_ENABLED = False
+
+LOGGER_LOCAL_ENABLED = False        # اینو اگر خواستی لاگ روشن شه کن True
+LOGGING_ENABLED = LOGGER_DEFAULT_ENABLED and LOGGER_LOCAL_ENABLED
+# ----------------------------------------------------
 
 
 class ProfileAgent:
@@ -13,8 +34,14 @@ class ProfileAgent:
       - Use simple, transparent, rule-based parsing (no LLM here)
     """
 
-    def __init__(self, logger: Optional[Logger] = None) -> None:
-        self.logger = logger or Logger()
+    def __init__(self, logger: Optional["Logger"] = None) -> None:
+        # مثل بقیه ایجنت‌ها: اگر logger پاس دادی همون، اگر نه و LOGGING فعال بود Logger() بساز
+        if logger is not None:
+            self.logger = logger
+        elif Logger and LOGGING_ENABLED:
+            self.logger = Logger()
+        else:
+            self.logger = None
 
     def _extract_age(self, text: str) -> Optional[int]:
         # e.g. "I am 30 years old" or "I'm 30 years old"
@@ -112,9 +139,11 @@ class ProfileAgent:
 
     def _extract_goal(self, text: str) -> Optional[str]:
         text_lower = text.lower()
-        if "work visa" in text_lower or "job" in text_lower or "work-based" in text_lower or "my goal is work" in text_lower:
+        if ("work visa" in text_lower or "job" in text_lower or
+            "work-based" in text_lower or "my goal is work" in text_lower):
             return "Work"
-        if "study visa" in text_lower or "student visa" in text_lower or "my goal is study" in text_lower:
+        if ("study visa" in text_lower or "student visa" in text_lower or
+            "my goal is study" in text_lower):
             return "Study"
         if "permanent residency" in text_lower or "pr" in text_lower:
             return "PR"
@@ -122,7 +151,7 @@ class ProfileAgent:
 
     def _extract_target_countries(self, text: str) -> List[str]:
         # super simple: look for "Germany", "Netherlands", etc.
-        countries = []
+        countries: List[str] = []
         candidates = ["Germany", "Netherlands", "Canada", "Australia", "Sweden", "UK"]
         for c in candidates:
             if re.search(r"\b" + re.escape(c) + r"\b", text, re.IGNORECASE):
