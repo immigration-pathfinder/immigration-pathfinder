@@ -1,5 +1,26 @@
 # agents/country_finder_agent.py
+import sys
+from pathlib import Path
 from typing import List, Dict, Any, Optional
+
+# Add project root so we can import tools, agents, ...
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+# ============================================
+# Optional logger with global toggle
+# ============================================
+from tools.logger import Logger, LOGGING_ENABLED as LOGGER_DEFAULT_ENABLED
+
+# NOTE:
+# We intentionally override the global LOGGING_ENABLED here.
+# For now, logging is disabled for this agent to keep output clean.
+# To enable logging for CountryFinderAgent:
+#   - set LOGGER_DEFAULT_ENABLED = True
+#   - or remove these two lines and rely on tools/logger.py
+LOGGER_DEFAULT_ENABLED =    False
+LOGGING_ENABLED = LOGGER_DEFAULT_ENABLED
 
 
 class CountryFinderAgent:
@@ -15,12 +36,12 @@ class CountryFinderAgent:
     # Scoring weights (must sum to 1.0)
     WEIGHTS = {
         "eligibility": 0.30,           # 30% - Can you qualify?
-        "language_alignment": 0.15,     # 15% - Language match
-        "financial_capacity": 0.20,     # 20% - Can you afford it?
-        "visa_difficulty": 0.10,        # 10% - How hard to get visa?
-        "quality_of_life": 0.10,        # 10% - Safety, healthcare, etc.
-        "cost_of_living": 0.10,         # 10% - Living expenses
-        "job_market": 0.05,             # 5% - Employment prospects
+        "language_alignment": 0.15,    # 15% - Language match
+        "financial_capacity": 0.20,    # 20% - Can you afford it?
+        "visa_difficulty": 0.10,       # 10% - How hard to get visa?
+        "quality_of_life": 0.10,       # 10% - Safety, healthcare, etc.
+        "cost_of_living": 0.10,        # 10% - Living expenses
+        "job_market": 0.05,            # 5% - Employment prospects
     }
     
     # Country-specific data for scoring
@@ -83,13 +104,19 @@ class CountryFinderAgent:
         },
     }
     
-    def __init__(self, match_results: List[Dict[str, Any]], user_profile: Dict[str, Any]):
+    def __init__(
+        self,
+        match_results: List[Dict[str, Any]],
+        user_profile: Dict[str, Any],
+        logger: Optional["Logger"] = None,
+    ):
         """
         Initialize CountryFinderAgent.
         
         Args:
             match_results: List of MatchResult dicts from MatchAgent
             user_profile: Original user profile dict
+            logger: Optional shared Logger instance (shared across agents/tools)
         """
         if not match_results:
             raise ValueError("match_results cannot be empty")
@@ -98,6 +125,30 @@ class CountryFinderAgent:
         
         self.match_results = match_results
         self.user_profile = user_profile
+
+        # Same logger pattern as MatchAgent
+        if logger is not None:
+            self.logger = logger
+        elif Logger and LOGGING_ENABLED:
+            self.logger = Logger()
+        else:
+            self.logger = None
+
+        # High-level init log
+        if self.logger:
+            try:
+                summary = {
+                    "matches_count": len(self.match_results),
+                    "goal": self.user_profile.get("goal"),
+                    "citizenship": self.user_profile.get("citizenship"),
+                }
+                self.logger.log_agent_call(
+                    agent_name="CountryFinderAgent.__init__",
+                    session_id=None,
+                    input_summary=str(summary),
+                )
+            except Exception:
+                pass
     
     def _score_eligibility(self, match_result: Dict[str, Any]) -> float:
         """
@@ -184,13 +235,15 @@ class CountryFinderAgent:
         missing = gaps.get("missing_requirements", [])
         
         # Check if funds are mentioned in gaps
-        has_funds_issue = any("funds" in req.lower() or "insufficient" in req.lower() 
-                              for req in missing)
+        has_funds_issue = any(
+            "funds" in req.lower() or "insufficient" in req.lower()
+            for req in missing
+        )
         
         if not has_funds_issue:
             return 1.0  # No financial issues
         
-        # Parse gap amount if available
+        # Parse gap amount if available (reserved for future use)
         user_funds = self.user_profile.get("funds_usd", 0)
         
         # Estimate based on match score
@@ -336,6 +389,16 @@ class CountryFinderAgent:
                 "detailed_breakdown": [...]  # For debugging/transparency
             }
         """
+        if self.logger:
+            try:
+                self.logger.log_agent_call(
+                    agent_name="CountryFinderAgent.rank_countries",
+                    session_id=None,
+                    input_summary=f"match_results={len(self.match_results)}",
+                )
+            except Exception:
+                pass
+
         scored_countries = []
         scores_dict = {}
         
@@ -379,6 +442,19 @@ class CountryFinderAgent:
                 "cost_of_living": round(self._get_country_factor(country, "cost_of_living") * 100, 2),
                 "job_market": round(self._get_country_factor(country, "job_market") * 100, 2),
             })
+
+        if self.logger:
+            try:
+                self.logger.log_tool_call(
+                    "CountryFinderAgent.rank_countries.result",
+                    {
+                        "best_count": len(classification["best_options"]),
+                        "acceptable_count": len(classification["acceptable"]),
+                        "not_recommended_count": len(classification["not_recommended"]),
+                    },
+                )
+            except Exception:
+                pass
         
         return {
             "best_options": classification["best_options"],
@@ -399,10 +475,37 @@ class CountryFinderAgent:
         
         best = ranking.get("best_options", [])
         if best:
-            return best[0]["country"]
+            top_country = best[0]["country"]
+            if self.logger:
+                try:
+                    self.logger.log_tool_call(
+                        "CountryFinderAgent.get_top_recommendation",
+                        {"top_country": top_country, "source": "best_options"},
+                    )
+                except Exception:
+                    pass
+            return top_country
         
         acceptable = ranking.get("acceptable", [])
         if acceptable:
-            return acceptable[0]["country"]
+            top_country = acceptable[0]["country"]
+            if self.logger:
+                try:
+                    self.logger.log_tool_call(
+                        "CountryFinderAgent.get_top_recommendation",
+                        {"top_country": top_country, "source": "acceptable"},
+                    )
+                except Exception:
+                    pass
+            return top_country
+        
+        if self.logger:
+            try:
+                self.logger.log_tool_call(
+                    "CountryFinderAgent.get_top_recommendation",
+                    {"top_country": None, "source": "none"},
+                )
+            except Exception:
+                pass
         
         return None
