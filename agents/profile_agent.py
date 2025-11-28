@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, List
 import re
 
 # ----------------------------------------------------
-# اختیاری: اگر خواستی مستقل هم ران بشه، روت پروژه رو اضافه کن
+# 
 # ----------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -19,7 +19,7 @@ except Exception:
     Logger = None            # type: ignore
     LOGGER_DEFAULT_ENABLED = False
 
-LOGGER_LOCAL_ENABLED = False        # اینو اگر خواستی لاگ روشن شه کن True
+LOGGER_LOCAL_ENABLED = False        # on or off
 LOGGING_ENABLED = LOGGER_DEFAULT_ENABLED and LOGGER_LOCAL_ENABLED
 # ----------------------------------------------------
 
