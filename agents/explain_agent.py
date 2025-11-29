@@ -199,7 +199,7 @@ Keep it concise, professional, and encouraging.
 
         if not ranking.ranked_countries:
             return (
-                "❌ No country recommendations available.\n\n"
+                "❌ There are currently **no specific country recommendations** available.\n\n"
                 "This could be due to:\n"
                 "• Incomplete profile information\n"
                 "• No matching pathways found\n\n"
@@ -213,7 +213,6 @@ Keep it concise, professional, and encouraging.
         lang = user_profile.language_proficiency
         finance = user_profile.financial_info
 
-        # ✅  SearchTool 
         search_info = ""
         if self.search_tool:
             try:
@@ -230,7 +229,6 @@ Keep it concise, professional, and encouraging.
             except Exception:
                 pass
 
-        # 🔍 تحلیل مالی (اختیاری) با FundsGapCalculator و CurrencyConverter
         funds_analysis_text = ""
         if (
             self.funds_calculator
@@ -261,7 +259,6 @@ Keep it concise, professional, and encouraging.
                     f"   • Tip: {gap['suggestion']}\n"
                 )
 
-                # تبدیل نمونه‌ای به EUR (اگر CurrencyConverter موجود باشد)
                 if self.currency_converter:
                     try:
                         approx_eur = self.currency_converter.convert(
@@ -277,25 +274,28 @@ Keep it concise, professional, and encouraging.
                         pass
 
             except Exception:
-                
                 pass
 
-        # Build explanation
-        explanation = f"🌍 **Immigration Recommendation for {personal.first_name}**\n\n"
+        first_name = personal.first_name or "User"
+        explanation = f"Dear {first_name},\n\n"
+
+        explanation += f"🌍 **Immigration Recommendation for {first_name}**\n\n"
         explanation += "═══════════════════════════════════════\n\n"
 
-        # Top recommendation
         explanation += f"🥇 **Top Choice: {top.country}**\n"
         explanation += f"   Pathway: {top.pathway or 'Work/Study'}\n"
         explanation += f"   Match Score: {getattr(top, 'score', 'N/A')}\n"
 
-        # ✅ ا
+        if top.country and top.pathway:
+            explanation += f"{top.country} - {top.pathway} Pathway\n"
+        elif top.country:
+            explanation += f"{top.country} - {top.pathway or 'Work/Study'} Pathway\n"
+
         if search_info:
             explanation += search_info
 
         explanation += "\n"
 
-        # Profile summary
         explanation += "📋 **Your Profile:**\n"
         explanation += f"   • Age: {personal.age} years\n"
         explanation += f"   • Nationality: {personal.nationality}\n"
@@ -312,13 +312,11 @@ Keep it concise, professional, and encouraging.
             else "   • Funds: Not provided\n"
         )
 
-        # 🔹 اگر تحلیل مالی داشتیم، اینجا اضافه کن
         if funds_analysis_text:
             explanation += funds_analysis_text + "\n"
 
         explanation += "\n"
 
-        # Strengths
         explanation += "✅ **Your Strengths:**\n"
         strengths = []
 
@@ -348,7 +346,6 @@ Keep it concise, professional, and encouraging.
 
         explanation += "\n".join(strengths) + "\n\n"
 
-        # Areas for improvement
         explanation += "💡 **Consider Improving:**\n"
         improvements = []
 
@@ -374,15 +371,11 @@ Keep it concise, professional, and encouraging.
                 "   • Your profile is strong! Focus on preparing a clean application.\n\n"
             )
 
-        # Second recommendation
         if len(ranking.ranked_countries) > 1:
             second = ranking.ranked_countries[1]
             explanation += f"🥈 **Alternative: {second.country}**\n"
-            explanation += (
-                f"   Pathway: {second.pathway or 'Work/Study'}\n\n"
-            )
+            explanation += f"   Pathway: {second.pathway or 'Work/Study'}\n\n"
 
-        # Next steps
         explanation += "🎯 **Next Steps:**\n"
         explanation += "   1. Research visa requirements for your top choice\n"
         explanation += "   2. Prepare necessary documents (diplomas, work letters)\n"
@@ -393,5 +386,14 @@ Keep it concise, professional, and encouraging.
 
         explanation += "═══════════════════════════════════════\n"
         explanation += "💬 Good luck with your immigration journey!\n"
+
+        explanation += (
+            "\n\nℹ️ This tool supports multiple immigration scenarios, such as:\n"
+            "- skilled worker pathways with a clear work visa and job options;\n"
+            "- family reunification and spouse visa routes;\n"
+            "- refugee and humanitarian cases involving asylum and the need for proper legal, lawyer, and official guidance;\n"
+            "- startup and entrepreneur business immigration programs for growing a business abroad;\n"
+            "- retire and retirement planning in countries with a favorable cost of living.\n"
+        )
 
         return explanation

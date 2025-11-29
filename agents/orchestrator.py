@@ -106,15 +106,31 @@ class Orchestrator:
     def _convert_profile_to_model(self, profile: Dict[str, Any]) -> UserProfile:
         """
         تبدیل dict به Pydantic UserProfile model
+
+        این متد مطمئن می‌شود که اگر ProfileAgent بعضی فیلدها را خالی گذاشت (None)،
+        مقدارهای پیش‌فرض امن برای Pydantic ارسال شود.
         """
+
+        # Safe defaults for missing values
+        age = profile.get("age")
+        if age is None:
+            age = 0  # fallback, required int
+
+        citizenship = profile.get("citizenship")
+        if citizenship is None:
+            citizenship = "Unknown"
+
+        current_residence = profile.get("citizenship")
+        if current_residence is None:
+            current_residence = "Unknown"
 
         return UserProfile(
             personal_info=PersonalInfo(
                 first_name="User",
                 last_name="",
-                age=profile.get("age"),
-                nationality=profile.get("citizenship"),
-                current_residence=profile.get("citizenship", ""),
+                age=age,
+                nationality=citizenship,
+                current_residence=current_residence,
                 marital_status=profile.get("marital_status") or "unknown",
             ),
             education=Education(
@@ -137,6 +153,7 @@ class Orchestrator:
             goals=[profile.get("goal") or ""],
             target_countries=profile.get("target_countries") or [],
         )
+
 
     def _convert_ranking_to_model(self, ranking: Dict[str, Any]) -> CountryRanking:
         """
