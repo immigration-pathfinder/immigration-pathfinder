@@ -1,4 +1,4 @@
-# tools/funds_calculator.py
+# tools/funds_gap_calculator.py
 
 import sys
 from pathlib import Path
