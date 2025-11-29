@@ -1,1 +1,35 @@
 
+# Core
+python-dotenv
+pydantic==2.6.3
+pydantic-core==2.16.3
+
+# Agents & Tools
+google-generativeai>=0.7.0
+requests
+aiohttp
+
+# Data & Processing
+numpy
+pandas
+
+# Logging
+loguru
+
+# For Search Tools (optional, used in Kaggle/ADK style)
+beautifulsoup4
+lxml
+
+# Memory / Session service
+diskcache
+
+# Vector / Embedding (optional future use)
+sentence-transformers
+
+# FastAPI (optional if you add an API server)
+fastapi
+uvicorn
+
+# Testing
+pytest
+pytest-asyncio
