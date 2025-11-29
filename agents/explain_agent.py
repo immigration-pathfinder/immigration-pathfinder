@@ -213,7 +213,7 @@ Keep it concise, professional, and encouraging.
         lang = user_profile.language_proficiency
         finance = user_profile.financial_info
 
-        # ✅ استفاده از SearchTool برای اطلاعات آفلاین
+        # ✅  SearchTool 
         search_info = ""
         if self.search_tool:
             try:
@@ -228,7 +228,6 @@ Keep it concise, professional, and encouraging.
                         f"\n💡 **Latest Info:** {results[0]['snippet'][:200]}...\n"
                     )
             except Exception:
-                # در حالت آفلاین ادامه می‌دهیم
                 pass
 
         # 🔍 تحلیل مالی (اختیاری) با FundsGapCalculator و CurrencyConverter
@@ -278,7 +277,7 @@ Keep it concise, professional, and encouraging.
                         pass
 
             except Exception:
-                # اگر مشکلی شد، برنامه نباید کرش کند
+                
                 pass
 
         # Build explanation
@@ -290,7 +289,7 @@ Keep it concise, professional, and encouraging.
         explanation += f"   Pathway: {top.pathway or 'Work/Study'}\n"
         explanation += f"   Match Score: {getattr(top, 'score', 'N/A')}\n"
 
-        # ✅ اضافه کردن اطلاعات جستجو شده
+        # ✅ ا
         if search_info:
             explanation += search_info
 
