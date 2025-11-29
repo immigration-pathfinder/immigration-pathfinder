@@ -41,10 +41,6 @@ class SearchTool:
     """
     High-level search abstraction for immigration-related queries.
 
-    Mode:
-      - اگر search_func دستی پاس بدهی → همان استفاده می‌شود
-      - اگر ندهی ولی GEMINI_API_KEY باشد → از Gemini برای سرچ وب استفاده می‌کند
-      - اگر هیچ‌کدام نبود → فقط از mock_search استفاده می‌شود
     """
 
     def __init__(self, search_func: Optional[Callable] = None):
