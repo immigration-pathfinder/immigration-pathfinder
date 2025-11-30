@@ -13,8 +13,11 @@ if str(PROJECT_ROOT) not in sys.path:
 # ----------------------------------------------------
 # LOGGER (safe import + toggle)
 # ----------------------------------------------------
-from tools.logger import Logger, LOGGING_ENABLED as LOGGER_DEFAULT_ENABLED
-
+try:
+    from tools.logger import Logger, LOGGING_ENABLED as LOGGER_DEFAULT_ENABLED
+except Exception:
+    Logger = None            # type: ignore
+    LOGGER_DEFAULT_ENABLED = False
 
 LOGGER_LOCAL_ENABLED = False        # on or off
 LOGGING_ENABLED = LOGGER_DEFAULT_ENABLED and LOGGER_LOCAL_ENABLED
@@ -32,6 +35,7 @@ class ProfileAgent:
     """
 
     def __init__(self, logger: Optional["Logger"] = None) -> None:
+        # مثل بقیه ایجنت‌ها: اگر logger پاس دادی همون، اگر نه و LOGGING فعال بود Logger() بساز
         if logger is not None:
             self.logger = logger
         elif Logger and LOGGING_ENABLED:

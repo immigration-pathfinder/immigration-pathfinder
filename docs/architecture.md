@@ -224,3 +224,66 @@ Contains unit and integration tests:
 - Clear separation of concerns  
 - Extendable data models  
 - Fully ready for multi-agent pipeline  
+
+
+---
+
+# 🔵 Phase 1 – Part 4 (Pipeline + Function Signatures + Diagram + Test Profiles)
+
+## 1. Full Execution Pipeline (Exact Order)
+
+1. **User enters raw text**
+2. **ProfileAgent.extract_profile(raw_text)**  
+   → returns structured `UserProfile`
+3. **MatchAgent.evaluate_all(profile)**  
+   → returns list of `MatchResult` objects
+4. **CountryFinderAgent.calculate_scores(match_results)**  
+   → returns country ranking + categories
+5. **ExplainAgent.generate_explanation(profile, ranking)**  
+   → returns final explanation
+6. **Orchestrator.run_pipeline(raw_text)**  
+   → combines everything into final output
+
+**Final Output Structure:**
+```json
+{
+  "profile": {},
+  "ranking": {},
+  "explanation": ""
+}
+
+
+
+def extract_profile(raw_text: str) -> dict:
+    ...
+
+def evaluate_all(profile: dict) -> list[dict]:
+    ...
+
+def calculate_scores(match_results: list[dict]) -> dict:
+    ...
+
+def generate_explanation(profile: dict, ranking: dict) -> str:
+    ...
+
+def run_pipeline(raw_text: str) -> dict:
+    ...
+
+
+(User Raw Text)
+       |
+       v
+ [ ProfileAgent ]
+       |
+       v
+ [  MatchAgent  ]
+       |
+       v
+[ CountryFinderAgent ]
+       |
+       v
+ [ ExplainAgent ]
+       |
+       v
+   Final Output
+(profile + ranking + explanation)
