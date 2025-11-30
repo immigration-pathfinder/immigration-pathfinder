@@ -14,6 +14,7 @@ if str(PROJECT_ROOT) not in sys.path:
 # ============================================
 
 from tools.logger import Logger, LOGGING_ENABLED as LOGGER_DEFAULT_ENABLED
+LOGGER_DEFAULT_ENABLED = False
 
 # از تنظیم اصلی logger استفاده می‌کنیم
 LOGGING_ENABLED = LOGGER_DEFAULT_ENABLED
