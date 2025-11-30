@@ -64,7 +64,7 @@ class ExplainAgent:
         if api_key and genai is not None:
             try:
                 genai.configure(api_key=api_key)
-                self.gemini_model = genai.GenerativeModel("gemini-1.5-pro")
+                self.gemini_model = genai.GenerativeModel("gemini-1.5-flash")
                 self.gemini_enabled = True
                 print("✅ Gemini API connected successfully!")
             except Exception as e:

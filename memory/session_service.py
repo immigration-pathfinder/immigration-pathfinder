@@ -1,39 +1,68 @@
-from typing import Dict, Any
+from typing import Dict, Any, Optional # Add Optional here
 from schemas.user_profile import UserProfile
 from schemas.country_ranking import CountryRanking
+import uuid
+import copy
 
 class SessionService:
-    def __init__(self):
-        self.sessions: Dict[str, Dict[str, Any]] = {}
+    _sessions: Dict[str, Dict[str, Any]] = {}
 
-    def _get_or_create_session(self, session_id: str) -> Dict[str, Any]:
-        if session_id not in self.sessions:
-            self.sessions[session_id] = {
-                "user_profile": None,
-                "country_ranking": None
-            }
-        return self.sessions[session_id]
+    def create_session(self) -> str:
+        session_id = str(uuid.uuid4())
+        self._sessions[session_id] = {
+            "user_profile": UserProfile(),
+            "recommendation_results": None
+        }
+        return session_id
 
-    def get_user_profile(self, session_id: str) -> UserProfile | None:
-        session = self._get_or_create_session(session_id)
-        return session["user_profile"]
+    def get_user_profile(self, session_id: str) -> Optional[UserProfile]: # Change here
+        session = self._sessions.get(session_id)
+        if session:
+            return session["user_profile"]
+        return None
 
-    def update_user_profile(self, session_id: str, user_profile: UserProfile):
-        session = self._get_or_create_session(session_id)
-        session["user_profile"] = user_profile
+    def update_user_profile(self, session_id: str, new_profile_data: Dict[str, Any]):
+        session = self._sessions.get(session_id)
+        if session:
+            current_profile = session["user_profile"].model_dump()
+            # Merge new data into current profile
+            # This is a shallow merge, for nested structures, a deeper merge might be needed
+            for key, value in new_profile_data.items():
+                if hasattr(session["user_profile"], key):
+                    setattr(session["user_profile"], key, value)
+            # Re-validate the profile after update
+            session["user_profile"] = UserProfile(**session["user_profile"].model_dump())
+        else:
+            raise ValueError(f"Session with ID {session_id} not found.")
 
-    def get_country_ranking(self, session_id: str) -> CountryRanking | None:
-        session = self._get_or_create_session(session_id)
-        return session["country_ranking"]
+    def store_recommendation_results(self, session_id: str, results: Dict[str, Any]):
+        session = self._sessions.get(session_id)
+        if session:
+            session["recommendation_results"] = copy.deepcopy(results)
+        else:
+            raise ValueError(f"Session with ID {session_id} not found.")
 
-    def update_country_ranking(self, session_id: str, country_ranking: CountryRanking):
-        session = self._get_or_create_session(session_id)
-        session["country_ranking"] = country_ranking
+    def get_recommendation_results(self, session_id: str) -> Optional[Dict[str, Any]]: # Change here
+        session = self._sessions.get(session_id)
+        if session:
+            return session["recommendation_results"]
+        return None
 
     def reset_session(self, session_id: str):
-        if session_id in self.sessions:
-            del self.sessions[session_id]
+        if session_id in self._sessions:
+            self._sessions[session_id] = {
+                "user_profile": UserProfile(),
+                "recommendation_results": None
+            }
+        else:
+            raise ValueError(f"Session with ID {session_id} not found.")
+
+    def delete_session(self, session_id: str):
+        if session_id in self._sessions:
+            del self._sessions[session_id]
+        else:
+            raise ValueError(f"Session with ID {session_id} not found.")
 
     def get_all_sessions(self) -> Dict[str, Dict[str, Any]]:
-        return self.sessions
+        return self._sessions
 
