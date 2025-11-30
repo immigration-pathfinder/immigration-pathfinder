@@ -1,40 +1,87 @@
 # tools/search_tool.py
+
 import sys
+import os
+import json
 from pathlib import Path
-
-# Add project root so we can import tools, rules, agents, ...
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
 from typing import List, Dict, Optional, Callable, Any
 from datetime import datetime
 
 # ==================================================
+# Add project root so we can import tools, rules, agents, ...
+# ==================================================
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+# ==================================================
 # OPTIONAL LOGGER (Safe Import)
 # ==================================================
-from tools.logger import Logger, LOGGING_ENABLED
-LOGGING_ENABLED = False
+try:
+    from tools.logger import Logger, LOGGING_ENABLED as LOGGER_DEFAULT_ENABLED
+except Exception:
+    Logger = None  # type: ignore
+    LOGGER_DEFAULT_ENABLED = False
+
+LOGGER_LOCAL_ENABLED = False
+LOGGING_ENABLED = LOGGER_DEFAULT_ENABLED and LOGGER_LOCAL_ENABLED
+# ==================================================
+
+# ==================================================
+# Optional Gemini import
+# ==================================================
+try:
+    import google.generativeai as genai
+except Exception:
+    genai = None
 # ==================================================
 
 
 class SearchTool:
     """
     High-level search abstraction for immigration-related queries.
+
     """
 
     def __init__(self, search_func: Optional[Callable] = None):
-        self.search_func = search_func
-        self.search_history = []
+        self.search_history: List[Dict[str, Any]] = []
         self.last_updated = datetime.now().isoformat()
+        self.gemini_model = None
 
         # logger toggle
         self.logger = Logger() if (LOGGING_ENABLED and Logger) else None
 
+        # 1) اگر search_func دستی دادی، همان
+        if search_func is not None:
+            self.search_func = search_func
+            mode = "custom"
+        else:
+            # 2) اگر Gemini در دسترس است و API_KEY داریم، سرچ واقعی با Gemini
+            api_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+            if genai is not None and api_key:
+                try:
+                    genai.configure(api_key=api_key)
+                    # مدل سبک برای سرچ
+                    self.gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+                    self.search_func = self._gemini_search
+                    mode = "gemini"
+                    print("✅ SearchTool: Using Gemini for real web search")
+                except Exception as e:
+                    self.gemini_model = None
+                    self.search_func = None
+                    mode = f"mock_fallback (gemini_error: {e})"
+                    print(f"⚠️ SearchTool: Gemini search init failed → using mock only. Error: {e}")
+                    if self.logger:
+                        self.logger.log_exception(e, "SearchTool.__init__ Gemini setup failed")
+            else:
+                # 3) بدون Gemini → فقط mock
+                self.search_func = None
+                mode = "mock_only"
+
         if self.logger:
             self.logger.log_tool_call(
                 "SearchTool.__init__",
-                {"mode": "real" if search_func else "mock"}
+                {"mode": mode, "has_logger": bool(self.logger)},
             )
 
     # ============================================================
@@ -66,12 +113,100 @@ class SearchTool:
             "max_results": max_results
         })
 
+        # اگر سرچ واقعی داریم، اول از آن استفاده کن
         if self.search_func:
             results = self._real_search(full_query, max_results)
         else:
             results = self._mock_search(full_query, country, pathway, max_results)
 
         return self._add_relevance_scores(results, query, country, pathway)
+
+    # ============================================================
+    # REAL SEARCH (Gemini یا تابع custom)
+    # ============================================================
+
+    def _real_search(self, query: str, max_results: int) -> List[Dict[str, Any]]:
+
+        if self.logger:
+            self.logger.log_tool_call(
+                "SearchTool._real_search",
+                {"query": query}
+            )
+
+        try:
+            # تابع سرچ می‌تواند Gemini یا هر API دیگری باشد
+            raw_results = self.search_func(query, num_results=max_results)
+
+            normalized: List[Dict[str, Any]] = []
+            for item in raw_results:
+                normalized.append({
+                    "title": str(item.get("title") or item.get("name") or "Result"),
+                    "url": str(item.get("link") or item.get("url") or ""),
+                    "snippet": str(item.get("snippet") or item.get("description") or ""),
+                    "source": "real_search"
+                })
+
+            # اگر چیزی برنگشت → برو سراغ mock
+            return normalized if normalized else self._mock_search(query, None, None, max_results)
+
+        except Exception as e:
+            if self.logger:
+                self.logger.log_exception(e, "SearchTool._real_search")
+
+            # هر خطا → mock
+            return self._mock_search(query, None, None, max_results)
+
+    # ------------------------------------------------------------
+    # Gemini-based search_func
+    # ------------------------------------------------------------
+    def _gemini_search(self, query: str, num_results: int = 5) -> List[Dict[str, Any]]:
+        """
+        استفاده از Gemini برای شبیه‌سازی سرچ وب:
+        - به Gemini می‌گوییم فقط JSON برگرداند
+        - هر آیتم: {title, url, snippet}
+        """
+
+        if self.gemini_model is None:
+            return []
+
+        prompt = f"""
+You are acting as a web search engine for immigration and visa information.
+
+User query:
+\"\"\"{query}\"\"\".
+
+Return the top {num_results} relevant web pages as pure JSON ONLY, no extra text.
+
+Format EXACTLY as:
+[
+  {{"title": "...", "url": "...", "snippet": "..."}},
+  ...
+]
+"""
+
+        try:
+            resp = self.gemini_model.generate_content(prompt)
+            text = getattr(resp, "text", None) or str(resp)
+
+            data = json.loads(text)
+
+            results: List[Dict[str, Any]] = []
+            for item in data[:num_results]:
+                results.append(
+                    {
+                        "title": str(item.get("title", "Result")),
+                        "url": str(item.get("url", "")),
+                        "snippet": str(item.get("snippet", "")),
+                    }
+                )
+
+            return results
+
+        except Exception as e:
+            if self.logger:
+                self.logger.log_exception(e, "SearchTool._gemini_search")
+            # هر خطا → بگذار _real_search بعداً برود سراغ mock
+            return []
 
     # ============================================================
     # HELPER API SEARCHES
@@ -131,7 +266,7 @@ class SearchTool:
         }
 
     # ============================================================
-    # INTERNAL METHODS
+    # INTERNAL METHODS (mock + relevance + stats)
     # ============================================================
 
     def _build_query(self, query: str, country: Optional[str], pathway: Optional[str]) -> str:
@@ -145,40 +280,7 @@ class SearchTool:
         parts.append("2024")
         return " ".join(parts)
 
-    # ------------------------------------------------------------
-    # REAL SEARCH
-    # ------------------------------------------------------------
-    def _real_search(self, query: str, max_results: int) -> List[Dict[str, Any]]:
-
-        if self.logger:
-            self.logger.log_tool_call(
-                "SearchTool._real_search",
-                {"query": query}
-            )
-
-        try:
-            raw_results = self.search_func(query, num_results=max_results)
-
-            normalized = []
-            for item in raw_results:
-                normalized.append({
-                    "title": str(item.get("title") or item.get("name") or "Result"),
-                    "url": str(item.get("link") or item.get("url") or ""),
-                    "snippet": str(item.get("snippet") or item.get("description") or ""),
-                    "source": "real_search"
-                })
-
-            return normalized if normalized else self._mock_search(query, None, None, max_results)
-
-        except Exception as e:
-            if self.logger:
-                self.logger.log_exception(e, "SearchTool._real_search")
-
-            return self._mock_search(query, None, None, max_results)
-
-    # ------------------------------------------------------------
-    # MOCK SEARCH (FULL VERSION — 100% YOUR ORIGINAL)
-    # ------------------------------------------------------------
+    # همان mock_search قدیمی‌ات – عیناً نگه دار
     def _mock_search(
         self,
         query: str,
@@ -250,7 +352,7 @@ class SearchTool:
             }
         }
 
-        results = []
+        results: List[Dict[str, Any]] = []
 
         # Country + Pathway match
         if country and pathway:

@@ -24,9 +24,8 @@
           "type": "array",
           "items": { "type": "string" }
         },
-        "risks": {
-          "type": "array",
-          "items": { "type": "string" }
+        "risk_status": {
+          "type": "string"
         }
       }
     }

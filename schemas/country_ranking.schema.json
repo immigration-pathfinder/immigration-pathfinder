@@ -34,6 +34,25 @@
     "scores": {
       "type": "object",
       "additionalProperties": { "type": "number" }
+    },
+    "detailed_breakdown": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "country": { "type": "string" },
+          "final_score": { "type": "number" },
+          "eligibility_status": { "type": "string" },
+          "eligibility_raw_score": { "type": "number" },
+          "language_score": { "type": "number" },
+          "financial_score": { "type": "number" },
+          "visa_difficulty": { "type": "number" },
+          "quality_of_life": { "type": "number" },
+          "cost_of_living": { "type": "number" },
+          "job_market": { "type": "number" }
+        },
+        "required": ["country", "final_score", "eligibility_status"]
+      }
     }
   },
   "required": ["best_options", "scores"]
