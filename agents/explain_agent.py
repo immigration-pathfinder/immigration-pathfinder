@@ -14,8 +14,6 @@ if str(PROJECT_ROOT) not in sys.path:
 # Imports
 from memory.session_service import SessionService
 from tools.search_tool import SearchTool
-from tools.currency_converter import CurrencyConverter
-from tools.funds_gap_calculator import FundsGapCalculator
 from schemas.user_profile import UserProfile
 from schemas.country_ranking import CountryRanking
 
@@ -39,13 +37,9 @@ class ExplainAgent:
         session_service: Optional[SessionService],
         search_tool: Optional[SearchTool],
         logger: Optional["Logger"] = None,
-        funds_calculator: Optional[FundsGapCalculator] = None,
-        currency_converter: Optional[CurrencyConverter] = None,
     ):
         self.session_service = session_service
         self.search_tool = search_tool
-        self.funds_calculator = funds_calculator
-        self.currency_converter = currency_converter
 
         # Logger setup
         if logger is not None:
@@ -64,16 +58,23 @@ class ExplainAgent:
         if api_key and genai is not None:
             try:
                 genai.configure(api_key=api_key)
-                self.gemini_model = genai.GenerativeModel("gemini-1.5-flash")
+                # ✅ مدل درست
+                self.gemini_model = genai.GenerativeModel("gemini-pro")
                 self.gemini_enabled = True
-                print("✅ Gemini API connected successfully!")
+                print("✅ Gemini API connected successfully! (model: gemini-pro)")
             except Exception as e:
                 self.gemini_enabled = False
                 print(f"⚠️  Gemini setup failed: {e}")
                 print("📝 Running in offline mode (using fallback templates)")
                 if self.logger:
                     self.logger.log_exception(e, "ExplainAgent Gemini setup failed")
-
+        else:
+            self.gemini_enabled = False
+            if not api_key:
+                print("ℹ️  No GEMINI_API_KEY found - running in offline mode")
+            elif genai is None:
+                print("ℹ️  google-generativeai not installed - running in offline mode")
+        
         if self.logger:
             self.logger.log_agent_call(
                 "ExplainAgent.__init__",
@@ -87,17 +88,14 @@ class ExplainAgent:
         country_ranking: CountryRanking,
     ) -> str:
         """Generate immigration explanation (Gemini or fallback)"""
-
+        
         if self.logger:
-            try:
-                self.logger.log_agent_call(
-                    "ExplainAgent.generate_explanation",
-                    None,
-                    f"user={getattr(user_profile.personal_info, 'first_name', 'N/A')}, "
-                    f"ranked={len(country_ranking.ranked_countries or [])}",
-                )
-            except Exception:
-                pass
+            self.logger.log_agent_call(
+                "ExplainAgent.generate_explanation",
+                None,
+                f"user={user_profile.personal_info.first_name}, "
+                f"ranked={len(country_ranking.ranked_countries or [])}",
+            )
 
         # Try Gemini first
         if self.gemini_enabled:
@@ -122,22 +120,19 @@ class ExplainAgent:
         # Fallback mode
         output = self._generate_fallback(user_profile, country_ranking)
         if self.logger:
-            try:
-                self.logger.log_tool_call(
-                    "ExplainAgent.generate_explanation",
-                    {"mode": "offline", "chars": len(output)},
-                )
-            except Exception:
-                pass
+            self.logger.log_tool_call(
+                "ExplainAgent.generate_explanation",
+                {"mode": "offline", "chars": len(output)},
+            )
         return output
 
     def _generate_with_gemini(
-        self,
-        user_profile: UserProfile,
-        ranking: CountryRanking,
+        self, 
+        user_profile: UserProfile, 
+        ranking: CountryRanking
     ) -> str:
         """Generate explanation using Gemini AI with enhanced search"""
-
+        
         if not ranking.ranked_countries:
             return "❌ No recommended countries found for your profile."
 
@@ -149,18 +144,16 @@ class ExplainAgent:
             print(f"   🔍 Searching for latest {top.country} visa information...")
             try:
                 search_results = self.search_tool.search_immigration(
-                    query="visa requirements",
+                    query=f"visa requirements",
                     country=top.country,
                     pathway=top.pathway or "Work",
-                    max_results=3,
+                    max_results=3
                 )
-
+                
                 if search_results:
                     search_context = "\n\nLATEST INFORMATION FROM WEB:\n"
                     for i, result in enumerate(search_results[:2], 1):
-                        search_context += (
-                            f"{i}. {result['title']}\n   {result['snippet']}\n"
-                        )
+                        search_context += f"{i}. {result['title']}\n   {result['snippet']}\n"
             except Exception as e:
                 print(f"   ⚠️  Search failed: {e}")
 
@@ -184,22 +177,37 @@ TASK:
 6. If available, incorporate the latest visa information from web search
 
 Keep it concise, professional, and encouraging.
+Format in Markdown.
 """
 
         result = self.gemini_model.generate_content(prompt)
-        text = getattr(result, "text", None) or str(result)
+        
+        # ✅ پردازش صحیح response
+        text = None
+        if hasattr(result, 'text'):
+            text = result.text
+        elif hasattr(result, 'candidates') and result.candidates:
+            try:
+                parts = result.candidates[0].content.parts
+                text = "".join(p.text for p in parts if hasattr(p, 'text'))
+            except Exception:
+                pass
+        
+        if not text:
+            text = str(result)
+        
         return text.strip()
 
     def _generate_fallback(
-        self,
-        user_profile: UserProfile,
-        ranking: CountryRanking,
+        self, 
+        user_profile: UserProfile, 
+        ranking: CountryRanking
     ) -> str:
         """Generate explanation without AI (offline mode)"""
-
+        
         if not ranking.ranked_countries:
             return (
-                "❌ There are currently **no specific country recommendations** available.\n\n"
+                "❌ No country recommendations available.\n\n"
                 "This could be due to:\n"
                 "• Incomplete profile information\n"
                 "• No matching pathways found\n\n"
@@ -213,6 +221,7 @@ Keep it concise, professional, and encouraging.
         lang = user_profile.language_proficiency
         finance = user_profile.financial_info
 
+        # ✅ استفاده از SearchTool برای اطلاعات آفلاین
         search_info = ""
         if self.search_tool:
             try:
@@ -220,180 +229,90 @@ Keep it concise, professional, and encouraging.
                     query="visa requirements",
                     country=top.country,
                     pathway=top.pathway or "Work",
-                    max_results=2,
+                    max_results=2
                 )
                 if results and results[0].get("snippet"):
-                    search_info = (
-                        f"\n💡 **Latest Info:** {results[0]['snippet'][:200]}...\n"
-                    )
+                    search_info = f"\n💡 **Latest Info:** {results[0]['snippet'][:200]}...\n"
             except Exception:
-                pass
+                pass  # در حالت آفلاین ادامه می‌دهیم
 
-        funds_analysis_text = ""
-        if (
-            self.funds_calculator
-            and finance is not None
-            and getattr(finance, "liquid_assets_usd", None) is not None
-        ):
-            try:
-                pathway = top.pathway or "Study"
-
-                needs = self.funds_calculator.calculate_total_needs(
-                    country=top.country,
-                    pathway=pathway,
-                    duration_months=12,
-                    include_tuition=True,
-                )
-
-                gap = self.funds_calculator.calculate_gap(
-                    available=float(finance.liquid_assets_usd or 0.0),
-                    required=float(needs["total_needed"]),
-                    currency="USD",
-                )
-
-                funds_analysis_text += (
-                    f"\n💰 **Financial Overview for {top.country} ({pathway}):**\n"
-                    f"   • Estimated total funds needed: ${needs['total_needed']:,.0f} USD\n"
-                    f"   • Your available funds: ${finance.liquid_assets_usd:,.0f} USD\n"
-                    f"   • Coverage: {gap['coverage_percent']}% ({gap['status']})\n"
-                    f"   • Tip: {gap['suggestion']}\n"
-                )
-
-                if self.currency_converter:
-                    try:
-                        approx_eur = self.currency_converter.convert(
-                            amount=float(finance.liquid_assets_usd or 0.0),
-                            from_curr="USD",
-                            to_curr="EUR",
-                            decimals=0,
-                        )
-                        funds_analysis_text += (
-                            f"   • In EUR this is approximately: €{approx_eur:,.0f}\n"
-                        )
-                    except Exception:
-                        pass
-
-            except Exception:
-                pass
-
-        first_name = personal.first_name or "User"
-        explanation = f"Dear {first_name},\n\n"
-
-        explanation += f"🌍 **Immigration Recommendation for {first_name}**\n\n"
+        # Build explanation
+        explanation = f"🌍 **Immigration Recommendation for {personal.first_name}**\n\n"
         explanation += "═══════════════════════════════════════\n\n"
-
+        
+        # Top recommendation
         explanation += f"🥇 **Top Choice: {top.country}**\n"
         explanation += f"   Pathway: {top.pathway or 'Work/Study'}\n"
         explanation += f"   Match Score: {getattr(top, 'score', 'N/A')}\n"
-
-        if top.country and top.pathway:
-            explanation += f"{top.country} - {top.pathway} Pathway\n"
-        elif top.country:
-            explanation += f"{top.country} - {top.pathway or 'Work/Study'} Pathway\n"
-
+        
+        # ✅ اضافه کردن اطلاعات جستجو شده
         if search_info:
             explanation += search_info
-
+        
         explanation += "\n"
-
+        
+        # Profile summary
         explanation += "📋 **Your Profile:**\n"
         explanation += f"   • Age: {personal.age} years\n"
         explanation += f"   • Nationality: {personal.nationality}\n"
         explanation += f"   • Education: {edu.degree_level} in {edu.field_of_study}\n"
-        explanation += (
-            f"   • Experience: {work.years_of_experience} years as {work.occupation}\n"
-        )
-        explanation += (
-            f"   • English: IELTS {lang.ielts_score if lang.ielts_score else 'Not provided'}\n"
-        )
-        explanation += (
-            f"   • Funds: ${finance.liquid_assets_usd:,.2f} USD\n"
-            if finance and finance.liquid_assets_usd is not None
-            else "   • Funds: Not provided\n"
-        )
-
-        if funds_analysis_text:
-            explanation += funds_analysis_text + "\n"
-
-        explanation += "\n"
-
+        explanation += f"   • Experience: {work.years_of_experience} years as {work.occupation}\n"
+        explanation += f"   • English: IELTS {lang.ielts_score if lang.ielts_score else 'Not provided'}\n"
+        explanation += f"   • Funds: ${finance.liquid_assets_usd:,.2f} USD\n\n"
+        
+        # Strengths
         explanation += "✅ **Your Strengths:**\n"
         strengths = []
-
+        
         if edu.degree_level in ["bachelor", "master", "phd"]:
-            strengths.append(
-                f"   • Strong educational background ({edu.degree_level})"
-            )
-
+            strengths.append(f"   • Strong educational background ({edu.degree_level})")
+        
         if work.years_of_experience >= 2:
-            strengths.append(
-                f"   • Valuable work experience ({work.years_of_experience} years)"
-            )
-
-        if finance and finance.liquid_assets_usd is not None:
-            if finance.liquid_assets_usd >= 10000:
-                strengths.append(
-                    f"   • Solid financial foundation (${finance.liquid_assets_usd:,.0f})"
-                )
-
+            strengths.append(f"   • Valuable work experience ({work.years_of_experience} years)")
+        
+        if finance.liquid_assets_usd >= 10000:
+            strengths.append(f"   • Solid financial foundation (${finance.liquid_assets_usd:,.0f})")
+        
         if lang.ielts_score and lang.ielts_score >= 6.5:
-            strengths.append(
-                f"   • Good English proficiency (IELTS {lang.ielts_score})"
-            )
-
+            strengths.append(f"   • Good English proficiency (IELTS {lang.ielts_score})")
+        
         if not strengths:
             strengths.append("   • Eligible for multiple immigration pathways")
-
+        
         explanation += "\n".join(strengths) + "\n\n"
-
+        
+        # Areas for improvement
         explanation += "💡 **Consider Improving:**\n"
         improvements = []
-
+        
         if not lang.ielts_score or lang.ielts_score < 6.5:
             improvements.append("   • Take IELTS test to improve language score")
-
-        if not finance or finance.liquid_assets_usd is None:
-            improvements.append(
-                "   • Provide clear information about your available funds"
-            )
-        elif finance.liquid_assets_usd < 15000:
+        
+        if finance.liquid_assets_usd < 15000:
             improvements.append("   • Build more savings for settlement funds")
-
+        
         if work.years_of_experience < 3:
-            improvements.append(
-                "   • Gain more work experience in your field to strengthen your profile"
-            )
-
+            improvements.append("   • Gain more work experience in your field")
+        
         if improvements:
             explanation += "\n".join(improvements) + "\n\n"
         else:
-            explanation += (
-                "   • Your profile is strong! Focus on preparing a clean application.\n\n"
-            )
-
+            explanation += "   • Your profile is strong! Focus on application process.\n\n"
+        
+        # Second recommendation
         if len(ranking.ranked_countries) > 1:
             second = ranking.ranked_countries[1]
             explanation += f"🥈 **Alternative: {second.country}**\n"
             explanation += f"   Pathway: {second.pathway or 'Work/Study'}\n\n"
-
+        
+        # Next steps
         explanation += "🎯 **Next Steps:**\n"
         explanation += "   1. Research visa requirements for your top choice\n"
         explanation += "   2. Prepare necessary documents (diplomas, work letters)\n"
         explanation += "   3. Take/improve IELTS if needed\n"
-        explanation += (
-            "   4. Consult with a licensed immigration consultant if possible\n\n"
-        )
-
+        explanation += "   4. Consult with a licensed immigration consultant\n\n"
+        
         explanation += "═══════════════════════════════════════\n"
         explanation += "💬 Good luck with your immigration journey!\n"
-
-        explanation += (
-            "\n\nℹ️ This tool supports multiple immigration scenarios, such as:\n"
-            "- skilled worker pathways with a clear work visa and job options;\n"
-            "- family reunification and spouse visa routes;\n"
-            "- refugee and humanitarian cases involving asylum and the need for proper legal, lawyer, and official guidance;\n"
-            "- startup and entrepreneur business immigration programs for growing a business abroad;\n"
-            "- retire and retirement planning in countries with a favorable cost of living.\n"
-        )
-
+        
         return explanation
