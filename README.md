@@ -244,16 +244,33 @@ Includes:
 Install dependencies:
 pip install -r requirements.txt
 
-yaml
-Copy code
-
-Run locally:
+```Run locally:
 python main.py
-
-yaml
-Copy code
+```
 
 ---
+
+## 🚀 Quick Start
+
+### Installation:
+```bash
+pip install -r requirements.txt
+```
+
+### Run Tests:
+```bash
+pytest tests/ -v
+```
+
+### CLI Demo:
+```bash
+python main.py demo
+```
+
+### Web UI:
+```bash
+streamlit run app.py
+```
 
 ## 📌 Notes & Limitations
 - This system provides **high-level educational guidance**, not legal immigration advice.  
@@ -279,3 +296,34 @@ Submitted for:
 Contributions are welcome.
 
 ---
+
+## 📄 License
+
+MIT License - Open source for educational and research purposes.
+
+---
+
+## 🙏 Acknowledgments
+
+- **Google Agents Intensive Program** for the capstone opportunity
+- **Kaggle Community** for feedback and inspiration
+- **Open Source Contributors** of libraries used: Pydantic, Streamlit, pytest
+
+---
+# **our team**
+
+### `Mehdi `
+**Role: Data Scientist**
+
+### Shima Soleymanipour
+**Role: Machine Learning Engineer**        
+**Kaggle: @shimasso**
+
+
+### Bahareh
+**Role: Data Scientist**
+
+### Amin
+**Role: Data Scientist** 
+**Kaggle: @aminmokri**
+
