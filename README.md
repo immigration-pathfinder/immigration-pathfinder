@@ -310,20 +310,25 @@ MIT License - Open source for educational and research purposes.
 - **Open Source Contributors** of libraries used: Pydantic, Streamlit, pytest
 
 ---
-# **our team**
+## our team
 
-### `Mehdi `
-**Role: Data Scientist**
+* **Mehdi Ganjkhani — Data Scientist**  
+  Developed immigration rules and eligibility logic.  
+  GitHub: https://github.com/mehdiganj | Kaggle: https://www.kaggle.com/mehdiganjkhani  
 
-### Shima Soleymanipour
-**Role: Machine Learning Engineer**        
-**Kaggle: @shimasso**
+* **Shima Soleymanipour — Machine Learning Engineer**  
+  Coordinated workflow and implemented core agents and tools.  
+  GitHub: https://github.com/shicoded | Kaggle: https://www.kaggle.com/shimasso  
+
+* **Bahareh Behrouz — Data Scientist**  
+  Built schemas, ProfileAgent, and logging utilities.  
+  GitHub: https://github.com/baharehbehrouz | Kaggle: https://www.kaggle.com/baharehbehrouz  
+
+* **Amin Mokri — Data Scientist**  
+  Contributed to ranking logic and end-to-end evaluation.  
+  GitHub: https://github.com/amin-mokri | Kaggle: https://www.kaggle.com/aminmokri
+  
+***For any questions or collaboration requests, feel free to contact any of us through the GitHub or Kaggle profiles listed above.***
 
 
-### Bahareh
-**Role: Data Scientist**
-
-### Amin
-**Role: Data Scientist** 
-**Kaggle: @aminmokri**
 
