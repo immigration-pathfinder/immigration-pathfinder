@@ -14,6 +14,7 @@ if str(PROJECT_ROOT) not in sys.path:
 # ============================================
 
 from tools.logger import Logger, LOGGING_ENABLED as LOGGER_DEFAULT_ENABLED
+LOGGER_DEFAULT_ENABLED = False
 
 # از تنظیم اصلی logger استفاده می‌کنیم
 LOGGING_ENABLED = LOGGER_DEFAULT_ENABLED
@@ -31,7 +32,6 @@ GOAL_ALIASES = {
     "work": {"work", "job", "worker", "skilled_worker", "work_visa"},
     "study": {"study", "student", "study_visa", "student_visa", "education"},
     "family": {"family", "spouse", "marriage", "sponsorship", "family_visa"},
-    "pr": {"pr", "permanent_residence", "permanent_residency", "settlement", "long_term"},
 }
 
 
@@ -222,9 +222,6 @@ class MatchAgent:
     # -----------------------------------------
     # Public API
     # -----------------------------------------
-    # -----------------------------------------
-    # Public API
-    # -----------------------------------------
     def evaluate_all(self, profile: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Evaluate profile against all rules.
@@ -238,7 +235,7 @@ class MatchAgent:
         if not profile:
             raise ValueError("Profile cannot be empty")
 
-        # High-level input log
+        # لاگ ورودی سطح بالا
         if self.logger:
             summary = {
                 "goal": profile.get("goal"),
@@ -251,22 +248,19 @@ class MatchAgent:
                 input_summary=str(summary),
             )
 
-        raw_goal = (profile.get("goal") or "").strip()
-        goal_lower = raw_goal.lower()
+        raw_goal = profile.get("goal") or ""
+        goal = raw_goal.strip().lower()
+        goal_aliases = GOAL_ALIASES.get(goal)
 
         results: List[Dict[str, Any]] = []
 
         for rule in self.rules:
-            pathway_raw = rule.get("pathway") or ""
-            pathway_clean = pathway_raw.strip()
-            pathway_lower = pathway_clean.lower()
+            pathway_raw = rule.get("pathway")
+            pathway = (pathway_raw or "").strip().lower()
 
-            # If both profile goal and rule pathway exist, filter by goal
-            # This is intentionally strict so that in tests we get:
-            #   for goal in ["Study", "Work", "PR"]:
-            #       for r in results: assert r["pathway"] == goal
-            if raw_goal and pathway_clean:
-                if pathway_lower != goal_lower:
+            # فقط وقتی فیلتر کنیم که هم goal و هم pathway معنی‌دار باشند
+            if goal and pathway and goal_aliases:
+                if pathway not in goal_aliases:
                     continue
 
             try:
@@ -289,17 +283,13 @@ class MatchAgent:
                     )
                 continue
 
-        # Final safety filter so tests see only exact pathway == goal
-        if raw_goal:
-            results = [r for r in results if r.get("pathway") == raw_goal]
-
         if self.logger:
             try:
                 self.logger.log_tool_call(
                     "MatchAgent.evaluate_all.result",
                     {
                         "matches_count": len(results),
-                        "goal": goal_lower,
+                        "goal": goal,
                     },
                 )
             except Exception:

@@ -80,15 +80,6 @@ st.markdown("""
     .stButton>button:hover {
         background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
     }
-
-    /* Custom CSS to make the sidebar wider */
-    section[data-testid="stSidebar"] {
-        width: 400px !important; /* Adjust this value as needed */
-    }
-    /* Adjust the main content area to accommodate the wider sidebar */
-    section[data-testid="stSidebar"] + div {
-        margin-left: 0px !important; /* Must match the sidebar width */
-    }
 </style>
 """, unsafe_allow_html=True)
 
