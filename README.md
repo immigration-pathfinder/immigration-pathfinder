@@ -310,7 +310,7 @@ MIT License - Open source for educational and research purposes.
 - **Open Source Contributors** of libraries used: Pydantic, Streamlit, pytest
 
 ---
-## our team
+## 🌏our team🌎
 
 * **Mehdi Ganjkhani — Data Scientist**  
   Developed immigration rules and eligibility logic.  
@@ -328,7 +328,7 @@ MIT License - Open source for educational and research purposes.
   Contributed to ranking logic and end-to-end evaluation.  
   GitHub: https://github.com/amin-mokri | Kaggle: https://www.kaggle.com/aminmokri
   
-***For any questions or collaboration requests, feel free to contact any of us through the GitHub or Kaggle profiles listed above.***
+     🤝 ***For any questions or collaboration requests, feel free to contact any of us through the GitHub or Kaggle profiles listed above.*** 🤝 
 
 
 
